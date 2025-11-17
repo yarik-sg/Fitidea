@@ -1,10 +1,14 @@
 import React from "react";
 import { Link, NavLink, useNavigate } from "react-router-dom";
 import { Button } from "./ui/button";
+import { cn } from "./ui/utils";
 import { useAuth } from "../lib/auth";
 
 const navLinkClass = ({ isActive }) =>
-  `text-sm font-medium transition-colors ${isActive ? "text-emerald-400" : "text-slate-200 hover:text-emerald-300"}`;
+  cn(
+    "text-sm font-medium transition-colors",
+    isActive ? "text-primary" : "text-muted-foreground hover:text-primary"
+  );
 
 function Header() {
   const navigate = useNavigate();
@@ -16,13 +20,13 @@ function Header() {
   };
 
   return (
-    <header className="border-b border-slate-800/60 bg-slate-900/60 backdrop-blur">
-      <div className="mx-auto flex max-w-6xl items-center justify-between px-4 py-4">
+    <header className="sticky top-0 z-20 border-b border-border/60 bg-background/70 backdrop-blur">
+      <div className="section-shell flex items-center justify-between py-4">
         <Link to="/" className="flex items-center space-x-3 text-lg font-semibold">
-          <span className="flex h-10 w-10 items-center justify-center rounded-lg bg-emerald-500 text-slate-900">FI</span>
-          <span>Fitidea</span>
+          <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary text-primary-foreground shadow-glow">FI</span>
+          <span className="text-white">Fitidea</span>
         </Link>
-        <nav className="flex items-center space-x-6">
+        <nav className="hidden items-center space-x-6 md:flex">
           <NavLink to="/" className={navLinkClass} end>
             Accueil
           </NavLink>

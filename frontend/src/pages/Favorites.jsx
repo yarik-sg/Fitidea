@@ -18,18 +18,18 @@ function Favorites() {
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ["favorites"] }),
   });
 
-  if (isLoading) return <p>Chargement de vos favoris...</p>;
-  if (isError) return <p>Impossible de charger vos favoris.</p>;
+  if (isLoading) return <p className="text-muted-foreground">Chargement de vos favoris...</p>;
+  if (isError) return <p className="text-destructive">Impossible de charger vos favoris.</p>;
 
   return (
     <div className="space-y-6">
       <div>
-        <p className="text-sm uppercase tracking-widest text-emerald-200">Favoris</p>
-        <h2 className="text-3xl font-bold">Vos sélections</h2>
-        <p className="text-slate-400">Retrouvez les produits que vous avez mis de côté.</p>
+        <p className="eyebrow">Favoris</p>
+        <h2 className="page-title">Vos sélections</h2>
+        <p className="text-muted-foreground">Retrouvez les produits que vous avez mis de côté.</p>
       </div>
       {data?.length ? (
-        <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+        <div className="fit-grid">
           {data.map((product) => (
             <ProductCard
               key={product.id}
@@ -40,7 +40,7 @@ function Favorites() {
           ))}
         </div>
       ) : (
-        <p className="text-sm text-slate-400">Vous n'avez pas encore de favoris.</p>
+        <p className="text-sm text-muted-foreground">Vous n'avez pas encore de favoris.</p>
       )}
     </div>
   );

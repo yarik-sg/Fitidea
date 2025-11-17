@@ -12,18 +12,17 @@ function Products() {
     },
   });
 
-  if (isLoading) return <p>Chargement des produits...</p>;
-  if (isError) return <p>Impossible de charger les produits.</p>;
+  if (isLoading) return <p className="text-muted-foreground">Chargement des produits...</p>;
+  if (isError) return <p className="text-destructive">Impossible de charger les produits.</p>;
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <p className="text-sm uppercase tracking-widest text-emerald-200">Catalogue</p>
-          <h2 className="text-3xl font-bold">Produits disponibles</h2>
-        </div>
+      <div>
+        <p className="eyebrow">Catalogue</p>
+        <h2 className="page-title">Produits disponibles</h2>
+        <p className="text-muted-foreground">Explorez l'offre Fitidea pour accompagner vos entraînements.</p>
       </div>
-      <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+      <div className="fit-grid">
         {data?.map((product) => (
           <ProductCard key={product.id} product={product} />
         ))}

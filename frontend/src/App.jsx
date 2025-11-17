@@ -19,14 +19,18 @@ const ProtectedRoute = ({ children }) => {
 
 function App() {
   return (
-    <div className="min-h-screen bg-gradient-to-b from-slate-950 to-slate-900 text-slate-50">
+    <div className="min-h-screen bg-background text-foreground">
+      <div className="pointer-events-none fixed inset-x-0 top-0 h-48 bg-gradient-to-b from-primary/20 to-transparent" aria-hidden />
       <Header />
-      <main className="mx-auto max-w-6xl px-4 py-8">
+      <main className="section-shell py-10">
         <Routes>
           <Route path="/" element={<Home />} />
           <Route path="/products" element={<Products />} />
           <Route path="/products/:id" element={<ProductDetail />} />
-          <Route path="/favorites" element={<ProtectedRoute><Favorites /></ProtectedRoute>} />
+          <Route
+            path="/favorites"
+            element={<ProtectedRoute><Favorites /></ProtectedRoute>}
+          />
           <Route path="/login" element={<Login />} />
           <Route path="/signup" element={<Signup />} />
         </Routes>
