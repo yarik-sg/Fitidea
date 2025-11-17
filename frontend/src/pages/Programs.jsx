@@ -1,86 +1,56 @@
-import React from "react";
+import React, { useEffect, useMemo, useState } from "react";
+import ProgramCard from "../components/ProgramCard";
+import ProgramFilters from "../components/ProgramFilters";
+import CoachCard from "../components/CoachCard";
 
-const programs = [
-  {
-    id: 1,
-    name: "Boost Débutant",
-    level: "Débutant",
-    duration: "4 semaines",
-    goal: "Renforcement global et découverte",
-  },
-  {
-    id: 2,
-    name: "Hybrid Intermédiaire",
-    level: "Intermédiaire",
-    duration: "8 semaines",
-    goal: "Prise de masse contrôlée",
-  },
-  {
-    id: 3,
-    name: "Shred Avancé",
-    level: "Avancé",
-    duration: "10 semaines",
-    goal: "Perte de poids et définition",
-  },
-  {
-    id: 4,
-    name: "Cardio Pulse",
-    level: "Intermédiaire",
-    duration: "6 semaines",
-    goal: "Amélioration du cardio et de l'endurance",
-  },
-  {
-    id: 5,
-    name: "Mobilité Flow",
-    level: "Débutant",
-    duration: "3 semaines",
-    goal: "Assouplissement et mobilité quotidienne",
-  },
-];
+const API_URL = import.meta.env.VITE_API_URL || "http://localhost:8000/api";
 
-const levelStyles = {
-  Débutant: "bg-emerald-50 text-emerald-700 ring-emerald-100",
-  Intermédiaire: "bg-orange-50 text-orange-700 ring-orange-100",
-  Avancé: "bg-rose-50 text-rose-700 ring-rose-100",
-};
-
-function ProgramCard({ program }) {
-  return (
-    <div className="flex h-full flex-col gap-4 rounded-2xl border border-orange-100 bg-white/90 p-5 shadow-sm shadow-orange-50 transition duration-150 hover:-translate-y-1 hover:shadow-lg hover:shadow-orange-100">
-      <div className="flex items-start justify-between gap-3">
-        <div className="space-y-2">
-          <p
-            className={`inline-flex items-center gap-2 rounded-full px-3 py-1 text-[11px] font-semibold uppercase tracking-wide ring-1 ${
-              levelStyles[program.level] || "bg-gray-50 text-gray-700 ring-gray-100"
-            }`}
-          >
-            <span aria-hidden>🔥</span>
-            {program.level}
-          </p>
-          <h3 className="text-lg font-semibold text-gray-900">{program.name}</h3>
-          <p className="text-sm text-gray-600">{program.goal}</p>
-        </div>
-        <span className="rounded-xl bg-orange-50 px-3 py-1 text-xs font-semibold text-orange-700 ring-1 ring-orange-100">
-          {program.duration}
-        </span>
-      </div>
-
-      <button
-        type="button"
-        className="mt-auto inline-flex items-center justify-center rounded-xl bg-orange-500 px-4 py-2 text-sm font-semibold text-white shadow-md shadow-orange-200 transition hover:-translate-y-0.5 hover:bg-orange-600 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-orange-500"
-      >
-        Voir le programme
-      </button>
-    </div>
-  );
+function fetchJson(url, options) {
+  return fetch(url, options).then((res) => res.json());
 }
 
-function Programs() {
+export default function Programs() {
+  const [programs, setPrograms] = useState([]);
+  const [meta, setMeta] = useState({ page: 1, page_size: 12, total: 0 });
+  const [filters, setFilters] = useState({ page: 1 });
+  const [coaches, setCoaches] = useState([]);
+  const [loading, setLoading] = useState(false);
+
+  const queryString = useMemo(() => {
+    const params = new URLSearchParams();
+    Object.entries(filters).forEach(([key, value]) => {
+      if (value !== null && value !== undefined && value !== "") {
+        params.append(key, value);
+      }
+    });
+    return params.toString();
+  }, [filters]);
+
+  useEffect(() => {
+    fetchJson(`${API_URL}/programs/coaches`).then(setCoaches).catch(() => setCoaches([]));
+  }, []);
+
+  useEffect(() => {
+    setLoading(true);
+    fetchJson(`${API_URL}/programs?${queryString}`)
+      .then((data) => {
+        setPrograms(data.items || []);
+        setMeta({ page: data.page, page_size: data.page_size, total: data.total });
+      })
+      .catch(() => setPrograms([]))
+      .finally(() => setLoading(false));
+  }, [queryString]);
+
+  const handleChange = (partial) => setFilters((prev) => ({ ...prev, page: 1, ...partial }));
+  const handleReset = () => setFilters({ page: 1 });
+
+  const totalPages = Math.max(1, Math.ceil((meta.total || 0) / (meta.page_size || 1)));
+
   return (
     <main className="min-h-screen bg-gradient-to-b from-orange-50/70 via-white to-white py-10">
-      <div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
-        <header className="mb-8 space-y-3 text-center sm:mb-10">
-          <p className="inline-flex items-center gap-2 rounded-full bg-orange-100 px-4 py-2 text-xs font-semibold uppercase tracking-[0.2em] text-orange-700">
+      <div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8 space-y-8">
+        <header className="space-y-3 text-center">
+          <p className="mx-auto inline-flex items-center gap-2 rounded-full bg-orange-100 px-4 py-2 text-xs font-semibold uppercase tracking-[0.2em] text-orange-700">
             <span className="inline-flex h-6 w-6 items-center justify-center rounded-full bg-white text-base">📋</span>
             Programmes d'entraînement
           </p>
@@ -90,14 +60,63 @@ function Programs() {
           </p>
         </header>
 
-        <section className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-          {programs.map((program) => (
-            <ProgramCard key={program.id} program={program} />
-          ))}
-        </section>
+        <ProgramFilters filters={filters} coaches={coaches} onChange={handleChange} onReset={handleReset} />
+
+        {loading ? (
+          <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+            {Array.from({ length: 6 }).map((_, idx) => (
+              <div key={idx} className="h-72 animate-pulse rounded-2xl bg-orange-50/60" />
+            ))}
+          </div>
+        ) : (
+          <section className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+            {programs.map((program) => (
+              <ProgramCard key={program.id} program={program} />
+            ))}
+          </section>
+        )}
+
+        <div className="flex items-center justify-between rounded-2xl border border-orange-100 bg-white px-4 py-3 shadow-sm shadow-orange-50">
+          <button
+            type="button"
+            disabled={meta.page <= 1}
+            onClick={() => setFilters((prev) => ({ ...prev, page: Math.max(1, (prev.page || 1) - 1) }))}
+            className="rounded-lg px-3 py-2 text-sm font-semibold text-orange-600 disabled:opacity-40"
+          >
+            ← Précédent
+          </button>
+          <p className="text-sm text-gray-600">
+            Page {meta.page} sur {totalPages} ({meta.total} programmes)
+          </p>
+          <button
+            type="button"
+            disabled={meta.page >= totalPages}
+            onClick={() => setFilters((prev) => ({ ...prev, page: (prev.page || 1) + 1 }))}
+            className="rounded-lg px-3 py-2 text-sm font-semibold text-orange-600 disabled:opacity-40"
+          >
+            Suivant →
+          </button>
+        </div>
+
+        {coaches.length > 0 && (
+          <section className="space-y-4">
+            <div className="flex items-center gap-2">
+              <span className="h-9 w-9 rounded-full bg-orange-100 text-lg text-orange-600 shadow-inner" aria-hidden>
+                <span className="flex h-full items-center justify-center">🏅</span>
+              </span>
+              <div>
+                <p className="text-xs font-semibold uppercase tracking-[0.2em] text-orange-600">Coachs certifiés</p>
+                <h2 className="text-xl font-semibold text-gray-900">Découvrez notre équipe</h2>
+              </div>
+            </div>
+            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+              {coaches.map((coach) => (
+                <CoachCard key={coach.id} coach={coach} />
+              ))}
+            </div>
+          </section>
+        )}
       </div>
     </main>
   );
 }
-
-export default Programs;

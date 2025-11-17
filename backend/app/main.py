@@ -3,6 +3,7 @@ from fastapi.middleware.cors import CORSMiddleware
 import redis.asyncio as redis
 
 from app.core.config import settings
+from app.db.session import Base, SessionLocal, engine
 from app.routes import (
     auth_routes,
     compare_routes,
@@ -10,7 +11,9 @@ from app.routes import (
     gym_routes,
     product_routes,
     program_routes,
+    training_routes,
 )
+from app.services.training_seed import seed_training_data
 
 app = FastAPI(title=settings.project_name)
 
@@ -26,6 +29,9 @@ app.add_middleware(
 @app.on_event("startup")
 async def startup_event() -> None:
     """Initialize external connections when the application starts."""
+    Base.metadata.create_all(bind=engine)
+    with SessionLocal() as db:
+        seed_training_data(db)
     app.state.redis = redis.from_url(settings.redis_url, decode_responses=True)
 
 
@@ -51,6 +57,7 @@ auth_modules = [
     favorite_routes,
     gym_routes,
     program_routes,
+    training_routes,
 ]
 
 for module in auth_modules:
