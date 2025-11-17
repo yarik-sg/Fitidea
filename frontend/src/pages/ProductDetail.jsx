@@ -1,7 +1,8 @@
 import React, { useMemo } from "react";
-import { useParams } from "react-router-dom";
+import { Link, useParams } from "react-router-dom";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import apiClient from "../lib/apiClient";
+import OfferTable from "../components/OfferTable";
 
 const formatCurrency = (value) => {
   const numericValue = Number(value);
@@ -12,43 +13,6 @@ const formatCurrency = (value) => {
     minimumFractionDigits: 0,
     maximumFractionDigits: 0,
   }).format(numericValue);
-};
-
-const buildPriceLabel = (product) => {
-  if (!product) return "Prix non disponible";
-
-  const prices = [];
-
-  if (product.min_price !== undefined) prices.push(Number(product.min_price));
-  if (product.max_price !== undefined) prices.push(Number(product.max_price));
-  if (product.price !== undefined) prices.push(Number(product.price));
-
-  if (Array.isArray(product.offers)) {
-    product.offers.forEach((offer) => {
-      if (offer?.price !== undefined) {
-        prices.push(Number(offer.price));
-      }
-    });
-  }
-
-  const numericPrices = prices.filter((value) => Number.isFinite(value));
-  if (!numericPrices.length) return "Prix non disponible";
-
-  const minPrice = Math.min(...numericPrices);
-  const maxPrice = Math.max(...numericPrices);
-
-  const formattedMin = formatCurrency(minPrice);
-  const formattedMax = formatCurrency(maxPrice);
-
-  if (formattedMin && formattedMax && minPrice !== maxPrice) {
-    return `${formattedMin}€ - ${formattedMax}€`;
-  }
-
-  if (formattedMin) {
-    return `À partir de ${formattedMin}€`;
-  }
-
-  return "Prix non disponible";
 };
 
 const RatingStars = ({ rating }) => {
@@ -76,24 +40,29 @@ const RatingStars = ({ rating }) => {
 };
 
 const LoadingSkeleton = () => (
-  <div className="min-h-screen bg-gray-50 py-10">
+  <main className="min-h-screen bg-gray-50 pb-12 pt-10">
     <div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
-      <div className="grid gap-6 md:grid-cols-2">
-        <div className="aspect-square animate-pulse rounded-3xl bg-gradient-to-br from-orange-50 via-orange-100 to-orange-50" />
-        <div className="space-y-4 rounded-3xl border border-orange-100 bg-white p-6 shadow-sm">
-          <div className="h-6 w-1/3 animate-pulse rounded-full bg-gray-200" />
-          <div className="h-10 w-5/6 animate-pulse rounded-full bg-gray-200" />
-          <div className="h-4 w-1/2 animate-pulse rounded-full bg-gray-200" />
-          <div className="h-4 w-1/3 animate-pulse rounded-full bg-gray-200" />
-          <div className="grid gap-3 sm:grid-cols-2">
-            <div className="h-11 w-full animate-pulse rounded-lg bg-orange-200" />
-            <div className="h-11 w-full animate-pulse rounded-lg bg-orange-100" />
+      <div className="mb-6 h-6 w-1/3 animate-pulse rounded-full bg-gray-200" />
+      <div className="grid gap-6 lg:grid-cols-[1.2fr,0.8fr]">
+        <div className="space-y-4 rounded-2xl border border-orange-100 bg-white p-6 shadow-lg shadow-orange-50">
+          <div className="aspect-square w-full animate-pulse rounded-2xl bg-gradient-to-br from-orange-50 via-orange-100 to-orange-50" />
+          <div className="grid grid-cols-3 gap-3">
+            {[1, 2, 3].map((item) => (
+              <div
+                key={item}
+                className="aspect-square animate-pulse rounded-xl bg-gray-100"
+              />
+            ))}
           </div>
-          <div className="h-24 w-full animate-pulse rounded-2xl bg-gray-100" />
+        </div>
+        <div className="space-y-4">
+          <div className="h-12 w-full animate-pulse rounded-2xl bg-white shadow-lg shadow-orange-50" />
+          <div className="h-44 w-full animate-pulse rounded-2xl bg-white shadow-lg shadow-orange-50" />
+          <div className="h-24 w-full animate-pulse rounded-2xl bg-white shadow-lg shadow-orange-50" />
         </div>
       </div>
     </div>
-  </div>
+  </main>
 );
 
 const ErrorState = ({ onRetry }) => (
@@ -128,12 +97,7 @@ function ProductDetail() {
   const { id } = useParams();
   const queryClient = useQueryClient();
 
-  const {
-    data: product,
-    isLoading,
-    isError,
-    refetch,
-  } = useQuery({
+  const { data: product, isLoading, isError, refetch } = useQuery({
     queryKey: ["product", id],
     queryFn: async () => {
       const { data } = await apiClient.get(`/products/${id}`);
@@ -177,7 +141,35 @@ function ProductDetail() {
   const offersCount = offers.length || product?.offers_count || 0;
   const isFavorite = Boolean(product?.is_favorite);
   const brandLabel = product?.brand || product?.category;
-  const priceLabel = buildPriceLabel(product);
+
+  const minPrice = useMemo(() => {
+    const prices = [];
+    if (product?.min_price !== undefined) prices.push(Number(product.min_price));
+    if (product?.price !== undefined) prices.push(Number(product.price));
+
+    offers.forEach((offer) => {
+      if (offer?.price !== undefined) prices.push(Number(offer.price));
+    });
+
+    const numericPrices = prices.filter((value) => Number.isFinite(value));
+    if (!numericPrices.length) return null;
+    return Math.min(...numericPrices);
+  }, [product, offers]);
+
+  const priceLabel = minPrice ? `À partir de ${formatCurrency(minPrice)}€` : "Prix non disponible";
+
+  const bulletPoints = useMemo(() => {
+    const bullets = [];
+    if (brandLabel) bullets.push(`Marque : ${brandLabel}`);
+    if (product?.category) bullets.push(`Catégorie : ${product.category}`);
+    if (offersCount) bullets.push(`${offersCount} offre${offersCount > 1 ? "s" : ""} comparée${offersCount > 1 ? "s" : ""}`);
+    if (product?.rating) bullets.push(`Note moyenne ${Number(product.rating).toFixed(1)}/5`);
+    if (product?.stock_status) bullets.push(product.stock_status);
+    while (bullets.length < 3) {
+      bullets.push("Sélection premium par Fitidea pour vos performances");
+    }
+    return bullets.slice(0, 6);
+  }, [brandLabel, offersCount, product]);
 
   const handleScrollToOffers = () => {
     const target = document.getElementById("offers-section");
@@ -198,263 +190,220 @@ function ProductDetail() {
     : null;
 
   return (
-    <main className="min-h-screen bg-gray-50 py-10">
+    <main className="min-h-screen bg-gray-50 pb-14 pt-8 font-sans">
       <div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
-        <header className="mb-8 space-y-3">
-          <div className="flex flex-wrap items-center gap-3 text-sm font-semibold uppercase tracking-[0.25em] text-orange-500">
-            <span className="rounded-full bg-orange-50 px-3 py-1 text-xs text-orange-600">Produit</span>
-            {product.category ? (
-              <span className="rounded-full border border-orange-100 px-3 py-1 text-xs text-gray-700">
-                {product.category}
+        <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
+          <Link
+            to="/products"
+            className="inline-flex items-center gap-2 rounded-full border border-orange-100 bg-white px-4 py-2 text-sm font-semibold text-orange-600 shadow-sm transition hover:border-orange-200 hover:bg-orange-50"
+          >
+            ← Retour aux produits
+          </Link>
+          {offersCount ? (
+            <span className="inline-flex items-center gap-2 rounded-full bg-orange-50 px-4 py-2 text-xs font-semibold uppercase tracking-[0.2em] text-orange-700">
+              Offres disponibles : {offersCount}
+            </span>
+          ) : null}
+        </div>
+
+        <div className="flex flex-wrap items-center gap-2 text-sm text-gray-500">
+          <Link to="/" className="text-orange-600 hover:underline">
+            Accueil
+          </Link>
+          <span>→</span>
+          <Link to="/products" className="text-orange-600 hover:underline">
+            Produits
+          </Link>
+          <span>→</span>
+          <span className="font-semibold text-gray-900">{product.name}</span>
+        </div>
+
+        <header className="mt-4 space-y-3 rounded-2xl bg-white/60 p-4 sm:p-6">
+          <div className="flex flex-wrap items-center gap-3">
+            <span className="rounded-full bg-orange-100 px-3 py-1 text-xs font-semibold uppercase tracking-[0.25em] text-orange-700">
+              Produit premium
+            </span>
+            {brandLabel ? (
+              <span className="rounded-full border border-orange-100 px-3 py-1 text-xs font-semibold text-gray-700">
+                {brandLabel}
+              </span>
+            ) : null}
+            {offersCount ? (
+              <span className="rounded-full bg-orange-50 px-3 py-1 text-xs font-semibold text-orange-700">
+                {offersCount} offre{offersCount > 1 ? "s" : ""}
               </span>
             ) : null}
           </div>
           <h1 className="text-3xl font-bold text-gray-900 sm:text-4xl">{product.name}</h1>
-          <div className="flex flex-wrap items-center gap-3 text-sm text-gray-600">
-            {brandLabel ? (
-              <span className="rounded-full bg-orange-100 px-3 py-1 text-xs font-semibold text-orange-700">
-                {brandLabel}
-              </span>
+          <div className="flex flex-wrap items-center gap-4 text-sm text-gray-600">
+            {product.category ? (
+              <span className="text-sm font-semibold text-gray-700">{product.category}</span>
             ) : null}
             {product.rating !== undefined && product.rating !== null ? (
               <RatingStars rating={product.rating} />
             ) : null}
             {product.reviews_count ? (
-              <span className="text-xs font-semibold text-gray-500">
-                {product.reviews_count} avis
-              </span>
-            ) : null}
-            {offersCount ? (
-              <span className="text-xs font-semibold text-gray-500">
-                {offersCount} {offersCount > 1 ? "offres disponibles" : "offre disponible"}
-              </span>
+              <span className="text-xs font-semibold text-gray-500">{product.reviews_count} avis</span>
             ) : null}
           </div>
         </header>
 
-        <div className="grid gap-8 lg:grid-cols-[1.15fr,0.85fr]">
-          <div className="overflow-hidden rounded-3xl border border-orange-100 bg-white shadow-sm">
-            <div className="flex flex-col gap-6 p-6 md:flex-row">
-              <div className="md:w-1/2">
-                <div className="relative overflow-hidden rounded-2xl border border-orange-50 bg-orange-50">
-                  <div className="relative aspect-square w-full">
-                    {product.image_url ? (
-                      <img
-                        src={product.image_url}
-                        alt={product.name}
-                        className="h-full w-full object-cover transition duration-500 hover:scale-105"
-                      />
-                    ) : (
-                      <div className="flex h-full w-full items-center justify-center text-6xl text-orange-300">🛒</div>
-                    )}
-                    {product.rating ? (
-                      <span className="absolute left-3 top-3 rounded-full bg-white/90 px-3 py-1 text-xs font-semibold text-amber-600 shadow-sm backdrop-blur">
-                        ⭐ {Number(product.rating).toFixed(1)}
-                      </span>
-                    ) : null}
-                    {offersCount ? (
-                      <span className="absolute right-3 top-3 rounded-full bg-orange-500/90 px-3 py-1 text-xs font-semibold text-white shadow-sm backdrop-blur">
-                        {offersCount} {offersCount > 1 ? "offres" : "offre"}
-                      </span>
-                    ) : null}
-                  </div>
-                </div>
+        <section className="mt-6 grid gap-8 lg:grid-cols-[1.15fr,0.85fr]">
+          <div className="space-y-4 rounded-2xl border border-orange-100 bg-white p-6 shadow-lg shadow-orange-50">
+            <div className="relative overflow-hidden rounded-2xl border border-orange-50 bg-orange-50">
+              <div className="relative aspect-square w-full">
+                {product.image_url ? (
+                  <img
+                    src={product.image_url}
+                    alt={product.name}
+                    className="h-full w-full object-cover transition duration-500 hover:scale-105"
+                  />
+                ) : (
+                  <div className="flex h-full w-full items-center justify-center text-6xl text-orange-300">🛒</div>
+                )}
+                {offersCount ? (
+                  <span className="absolute right-3 top-3 rounded-full bg-orange-500/90 px-3 py-1 text-xs font-semibold text-white shadow-sm backdrop-blur">
+                    {offersCount} offre{offersCount > 1 ? "s" : ""}
+                  </span>
+                ) : null}
               </div>
-
-              <div className="flex-1 space-y-6">
-                <div className="space-y-3">
-                  <div className="inline-flex items-center gap-2 rounded-full bg-orange-50 px-4 py-2 text-sm font-semibold text-orange-700">
-                    <span className="text-lg">🏷️</span>
-                    <span>{priceLabel}</span>
-                  </div>
-                  <p className="text-base leading-relaxed text-gray-700">
-                    {product.short_description ||
-                      product.description ||
-                      "Découvrez ce produit sélectionné pour optimiser vos entraînements et votre bien-être."}
-                  </p>
+            </div>
+            <div className="grid grid-cols-3 gap-3">
+              {[product.image_url, ...(product.gallery || [])].slice(0, 3).map((image, index) => (
+                <div
+                  key={index}
+                  className="flex aspect-square items-center justify-center overflow-hidden rounded-xl border border-orange-50 bg-gray-50"
+                >
+                  {image ? (
+                    <img src={image} alt={`${product.name} ${index + 1}`} className="h-full w-full object-cover" />
+                  ) : (
+                    <span className="text-2xl text-orange-300">🛒</span>
+                  )}
                 </div>
-
-                <div className="grid gap-3 sm:grid-cols-2">
-                  <div className="rounded-2xl border border-orange-100 bg-orange-50 px-4 py-3">
-                    <p className="text-xs font-semibold uppercase tracking-[0.15em] text-orange-600">Marque</p>
-                    <p className="text-base font-semibold text-gray-900">{brandLabel || "Non renseignée"}</p>
-                  </div>
-                  <div className="rounded-2xl border border-orange-100 bg-white px-4 py-3">
-                    <p className="text-xs font-semibold uppercase tracking-[0.15em] text-orange-600">Catégorie</p>
-                    <p className="text-base font-semibold text-gray-900">{product.category || "Non renseignée"}</p>
-                  </div>
-                  <div className="rounded-2xl border border-orange-100 bg-white px-4 py-3">
-                    <p className="text-xs font-semibold uppercase tracking-[0.15em] text-orange-600">Offres disponibles</p>
-                    <p className="text-base font-semibold text-gray-900">{offersCount || "Aucune"}</p>
-                  </div>
-                  <div className="rounded-2xl border border-orange-100 bg-white px-4 py-3">
-                    <p className="text-xs font-semibold uppercase tracking-[0.15em] text-orange-600">Note</p>
-                    <p className="text-base font-semibold text-gray-900">
-                      {product.rating ? `${Number(product.rating).toFixed(1)}/5` : "N/A"}
-                    </p>
-                  </div>
-                </div>
-
-                <div className="flex flex-wrap gap-3 pt-2">
-                  <button
-                    type="button"
-                    onClick={() => favoriteMutation.mutate(isFavorite)}
-                    disabled={favoriteMutation.isPending}
-                    className="inline-flex items-center justify-center gap-2 rounded-lg border border-orange-200 bg-white px-4 py-2 text-sm font-semibold text-orange-600 shadow-sm transition hover:border-orange-300 hover:bg-orange-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-orange-500 disabled:cursor-not-allowed disabled:opacity-70"
-                  >
-                    <span aria-hidden="true">{isFavorite ? "❤️" : "🤍"}</span>
-                    {favoriteMutation.isPending
-                      ? "Mise à jour..."
-                      : isFavorite
-                        ? "Retirer des favoris"
-                        : "Ajouter aux favoris"}
-                  </button>
-
-                  {offersCount ? (
-                    <button
-                      type="button"
-                      onClick={handleScrollToOffers}
-                      className="inline-flex items-center justify-center gap-2 rounded-lg bg-orange-500 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-orange-600 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-orange-500"
-                    >
-                      Voir les offres
-                    </button>
-                  ) : null}
-                </div>
-              </div>
+              ))}
             </div>
           </div>
 
           <aside className="space-y-4">
-            <div className="rounded-3xl border border-orange-100 bg-white p-6 shadow-sm">
-              <div className="flex items-center justify-between">
-                <h3 className="text-lg font-semibold text-gray-900">Résumé</h3>
-                {offersCount ? (
-                  <span className="rounded-full bg-orange-50 px-3 py-1 text-xs font-semibold text-orange-700">
-                    {offersCount} {offersCount > 1 ? "offres" : "offre"}
-                  </span>
-                ) : null}
-              </div>
-              <div className="mt-4 space-y-3 text-sm text-gray-700">
-                <div className="flex items-center justify-between rounded-2xl bg-orange-50 px-4 py-3 text-base font-semibold text-orange-700">
-                  <span>Prix</span>
-                  <span>{priceLabel}</span>
+            <div className="rounded-2xl border border-orange-100 bg-white p-6 shadow-lg shadow-orange-50">
+              <div className="flex items-start justify-between gap-3">
+                <div>
+                  <p className="text-xs font-semibold uppercase tracking-[0.25em] text-orange-500">À partir de</p>
+                  <p className="text-4xl font-bold text-gray-900">{priceLabel}</p>
+                  <p className="text-sm text-gray-500">Prix dynamique basé sur nos partenaires.</p>
                 </div>
-                {brandLabel ? (
-                  <div className="flex items-center justify-between rounded-2xl border border-orange-50 px-4 py-3">
-                    <span className="text-gray-600">Marque</span>
-                    <span className="font-semibold text-gray-900">{brandLabel}</span>
-                  </div>
-                ) : null}
-                {product.category ? (
-                  <div className="flex items-center justify-between rounded-2xl border border-orange-50 px-4 py-3">
-                    <span className="text-gray-600">Catégorie</span>
-                    <span className="font-semibold text-gray-900">{product.category}</span>
-                  </div>
-                ) : null}
-                {offersCount ? (
-                  <div className="flex items-center justify-between rounded-2xl border border-orange-50 px-4 py-3">
-                    <span className="text-gray-600">Offres</span>
-                    <span className="font-semibold text-gray-900">{offersCount}</span>
-                  </div>
-                ) : null}
-                {product.rating ? (
-                  <div className="flex items-center justify-between rounded-2xl border border-orange-50 px-4 py-3">
-                    <span className="text-gray-600">Note</span>
-                    <span className="font-semibold text-gray-900">{Number(product.rating).toFixed(1)}/5</span>
-                  </div>
-                ) : null}
+                <button
+                  type="button"
+                  onClick={() => favoriteMutation.mutate(isFavorite)}
+                  disabled={favoriteMutation.isPending}
+                  aria-pressed={isFavorite}
+                  aria-label={isFavorite ? "Retirer des favoris" : "Ajouter aux favoris"}
+                  className="inline-flex h-11 w-11 items-center justify-center rounded-full border border-orange-100 bg-white text-lg shadow-md transition hover:scale-110 hover:border-orange-200 hover:bg-orange-50 disabled:cursor-not-allowed disabled:opacity-70"
+                >
+                  <span aria-hidden="true">{isFavorite ? "🧡" : "🤍"}</span>
+                </button>
               </div>
-              <div className="mt-4 space-y-2 text-sm text-gray-600">
-                <p className="text-xs font-semibold uppercase tracking-[0.2em] text-orange-500">Description</p>
-                <p className="rounded-2xl border border-orange-50 bg-gray-50 px-4 py-3 text-sm leading-relaxed text-gray-700">
-                  {product.description ||
-                    "Comparez les meilleures offres pour sélectionner l'option la plus adaptée à vos objectifs."}
-                </p>
+
+              <div className="mt-4 flex flex-col gap-3 sm:flex-row">
+                <button
+                  type="button"
+                  onClick={handleScrollToOffers}
+                  className="inline-flex flex-1 items-center justify-center rounded-xl bg-orange-500 px-6 py-3 text-sm font-semibold text-white shadow-lg shadow-orange-200 transition hover:bg-orange-600"
+                >
+                  Voir l'offre la moins chère
+                </button>
+                <button
+                  type="button"
+                  onClick={() => favoriteMutation.mutate(isFavorite)}
+                  disabled={favoriteMutation.isPending}
+                  className="inline-flex flex-1 items-center justify-center gap-2 rounded-xl border border-orange-200 bg-orange-50 px-6 py-3 text-sm font-semibold text-orange-700 shadow-sm transition hover:border-orange-300 hover:bg-white disabled:cursor-not-allowed disabled:opacity-70"
+                >
+                  {favoriteMutation.isPending ? "Mise à jour..." : isFavorite ? "Retirer des favoris" : "Ajouter aux favoris"}
+                </button>
+              </div>
+
+              <div className="mt-5 grid grid-cols-2 gap-3 text-sm text-gray-700">
+                <div className="rounded-2xl border border-orange-50 bg-orange-50 px-4 py-3">
+                  <p className="text-xs font-semibold uppercase tracking-[0.15em] text-orange-600">Marque</p>
+                  <p className="text-base font-semibold text-gray-900">{brandLabel || "Non renseignée"}</p>
+                </div>
+                <div className="rounded-2xl border border-orange-50 bg-white px-4 py-3">
+                  <p className="text-xs font-semibold uppercase tracking-[0.15em] text-orange-600">Catégorie</p>
+                  <p className="text-base font-semibold text-gray-900">{product.category || "Non renseignée"}</p>
+                </div>
+                <div className="rounded-2xl border border-orange-50 bg-white px-4 py-3">
+                  <p className="text-xs font-semibold uppercase tracking-[0.15em] text-orange-600">Offres</p>
+                  <p className="text-base font-semibold text-gray-900">{offersCount || "Aucune"}</p>
+                </div>
+                <div className="rounded-2xl border border-orange-50 bg-white px-4 py-3">
+                  <p className="text-xs font-semibold uppercase tracking-[0.15em] text-orange-600">Note</p>
+                  <p className="text-base font-semibold text-gray-900">
+                    {product.rating ? `${Number(product.rating).toFixed(1)}/5` : "N/A"}
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            <div className="rounded-2xl border border-orange-100 bg-white p-6 shadow-lg shadow-orange-50">
+              <p className="text-xs font-semibold uppercase tracking-[0.2em] text-orange-500">À propos du produit</p>
+              <h2 className="mt-2 text-xl font-bold text-gray-900">Pourquoi nos utilisateurs l'adorent</h2>
+              <p className="mt-2 text-sm leading-relaxed text-gray-700">
+                {product.short_description ||
+                  product.description ||
+                  "Découvrez une sélection premium conçue pour booster vos performances et votre bien-être."}
+              </p>
+              <ul className="mt-4 space-y-2 text-sm text-gray-700">
+                {bulletPoints.map((bullet, index) => (
+                  <li key={index} className="flex items-start gap-2">
+                    <span className="mt-1 text-orange-500">✔️</span>
+                    <span>{bullet}</span>
+                  </li>
+                ))}
+              </ul>
+              <div className="mt-4 grid gap-2 rounded-2xl border border-dashed border-orange-100 bg-orange-50 p-4 text-xs text-gray-600">
+                <div className="flex items-center justify-between">
+                  <span className="font-semibold text-gray-800">Référence</span>
+                  <span className="rounded-full bg-white px-3 py-1 font-semibold text-orange-600 shadow-sm">#{product.id}</span>
+                </div>
+                {product.sku ? (
+                  <div className="flex items-center justify-between">
+                    <span className="font-semibold text-gray-800">SKU</span>
+                    <span className="font-semibold text-gray-700">{product.sku}</span>
+                  </div>
+                ) : null}
+                {product.stock_status ? (
+                  <div className="flex items-center justify-between">
+                    <span className="font-semibold text-gray-800">Disponibilité</span>
+                    <span className="font-semibold text-emerald-600">{product.stock_status}</span>
+                  </div>
+                ) : null}
               </div>
             </div>
           </aside>
-        </div>
+        </section>
 
-        <section id="offers-section" className="mt-12 space-y-4">
+        <section id="offers-section" className="mt-10 space-y-4">
           <div className="flex flex-col gap-2 sm:flex-row sm:items-baseline sm:justify-between">
             <div>
-              <p className="text-sm font-semibold uppercase tracking-[0.2em] text-orange-500">Offres détaillées</p>
+              <p className="text-sm font-semibold uppercase tracking-[0.2em] text-orange-500">Comparateur</p>
               <h2 className="text-2xl font-bold text-gray-900">Choisissez votre boutique</h2>
               <p className="text-sm text-gray-600">Comparez rapidement les prix, conditions et vendeurs.</p>
             </div>
             {offersCount ? (
               <span className="rounded-full bg-white px-4 py-2 text-xs font-semibold text-gray-700 shadow-sm">
-                {offersCount} {offersCount > 1 ? "offres" : "offre"}
+                {offersCount} offre{offersCount > 1 ? "s" : ""}
               </span>
             ) : null}
           </div>
 
-          {offersCount ? (
-            <div className="grid gap-4 md:grid-cols-2">
-              {offers.map((offer) => {
-                const offerPrice = formatCurrency(offer.price);
-                return (
-                  <div
-                    key={offer.id || offer.title}
-                    className="flex flex-col gap-4 rounded-2xl border border-orange-100 bg-white p-5 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md"
-                  >
-                    <div className="flex items-start justify-between gap-3">
-                      <div className="flex items-center gap-3">
-                        <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-orange-50 text-2xl text-orange-400">
-                          🛒
-                        </div>
-                        <div className="space-y-1">
-                          <p className="text-base font-semibold text-gray-900">{offer.title || "Offre partenaire"}</p>
-                          {offer.description ? (
-                            <p className="text-sm text-gray-600 line-clamp-2">{offer.description}</p>
-                          ) : null}
-                        </div>
-                      </div>
-                      {offerPrice ? (
-                        <span className="rounded-lg bg-orange-50 px-3 py-1 text-sm font-semibold text-orange-700">
-                          {offerPrice}€
-                        </span>
-                      ) : null}
-                    </div>
-
-                    <div className="flex flex-wrap gap-2 text-xs font-semibold text-gray-500">
-                      {offer.gym_id ? (
-                        <span className="rounded-full border border-orange-100 px-3 py-1 text-orange-700">Salle #{offer.gym_id}</span>
-                      ) : null}
-                      {offer.user_id ? (
-                        <span className="rounded-full border border-orange-100 px-3 py-1 text-gray-700">Vendeur #{offer.user_id}</span>
-                      ) : null}
-                      {offer.seller ? (
-                        <span className="rounded-full border border-orange-100 px-3 py-1 text-gray-700">{offer.seller}</span>
-                      ) : null}
-                    </div>
-
-                    {offer.url ? (
-                      <a
-                        href={offer.url}
-                        target="_blank"
-                        rel="noreferrer"
-                        className="inline-flex items-center justify-center gap-2 rounded-lg bg-orange-500 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-orange-600 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-orange-500"
-                      >
-                        Accéder à l'offre
-                      </a>
-                    ) : null}
-                  </div>
-                );
-              })}
-            </div>
-          ) : (
-            <div className="rounded-2xl border border-orange-100 bg-white p-6 text-sm text-gray-600 shadow-sm">
-              Aucune offre disponible pour le moment.
-            </div>
-          )}
+          <OfferTable offers={offers} />
         </section>
 
-        <footer className="mt-10 flex items-center justify-between rounded-2xl border border-orange-100 bg-white px-4 py-3 text-sm text-gray-600 shadow-sm">
+        <footer className="mt-10 flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-orange-100 bg-white px-4 py-3 text-sm text-gray-600 shadow-sm">
           <span>Dernière mise à jour : {lastUpdate || "Non renseignée"}</span>
           {offersCount ? (
             <span className="rounded-full bg-orange-50 px-3 py-1 text-xs font-semibold text-orange-700">
-              {offersCount} {offersCount > 1 ? "offres" : "offre"}
+              {offersCount} offre{offersCount > 1 ? "s" : ""}
             </span>
           ) : null}
         </footer>
