@@ -5,7 +5,7 @@ import Home from "./pages/Home";
 import Products from "./pages/Products";
 import ProductDetail from "./pages/ProductDetail";
 import Login from "./pages/Login";
-import Signup from "./pages/Signup";
+import Register from "./pages/Register";
 import Favorites from "./pages/Favorites";
 import { useAuth } from "./lib/auth";
 
@@ -32,7 +32,8 @@ function App() {
             element={<ProtectedRoute><Favorites /></ProtectedRoute>}
           />
           <Route path="/login" element={<Login />} />
-          <Route path="/signup" element={<Signup />} />
+          <Route path="/register" element={<Register />} />
+          <Route path="/signup" element={<Register />} />
         </Routes>
       </main>
     </div>

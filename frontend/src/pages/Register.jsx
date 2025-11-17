@@ -3,34 +3,30 @@ import { Link, useNavigate } from "react-router-dom";
 import { useMutation } from "@tanstack/react-query";
 import apiClient from "../lib/apiClient";
 
-function Login() {
+function Register() {
   const navigate = useNavigate();
-  const [form, setForm] = useState({ email: "", password: "" });
+  const [form, setForm] = useState({ name: "", email: "", password: "" });
   const [errorMessage, setErrorMessage] = useState("");
+  const [successMessage, setSuccessMessage] = useState("");
 
-  const loginMutation = useMutation({
+  const registerMutation = useMutation({
     mutationFn: async () => {
-      const payload = new URLSearchParams();
-      payload.append("username", form.email);
-      payload.append("password", form.password);
-
-      const { data } = await apiClient.post("/auth/login", payload, {
-        headers: {
-          "Content-Type": "application/x-www-form-urlencoded",
-        },
+      const { data } = await apiClient.post("/auth/register", {
+        name: form.name,
+        email: form.email,
+        password: form.password,
       });
-
-      localStorage.setItem("auth_token", data.access_token);
       return data;
     },
     onSuccess: () => {
       setErrorMessage("");
-      navigate("/products");
+      setSuccessMessage("Compte créé ! Redirection...");
+      setTimeout(() => navigate("/login"), 1200);
     },
     onError: (error) => {
       const apiMessage =
-        error.response?.data?.detail ||
-        "Impossible de vous connecter. Vérifiez vos identifiants.";
+        error.response?.data?.detail || "Impossible de créer le compte, réessayez.";
+      setSuccessMessage("");
       setErrorMessage(apiMessage);
     },
   });
@@ -42,7 +38,7 @@ function Login() {
 
   const handleSubmit = (event) => {
     event.preventDefault();
-    loginMutation.mutate();
+    registerMutation.mutate();
   };
 
   return (
@@ -51,8 +47,8 @@ function Login() {
         <div className="rounded-2xl border border-orange-100 bg-white shadow-sm px-6 py-8 sm:px-8 sm:py-10">
           <div className="mb-8 text-center">
             <h1 className="text-3xl font-semibold text-orange-500">Fitidea</h1>
-            <p className="mt-2 text-lg font-medium text-gray-800">Bienvenue de retour 👋</p>
-            <p className="text-sm text-gray-500">Connectez-vous pour accéder à vos produits.</p>
+            <p className="mt-2 text-lg font-medium text-gray-800">Créez votre compte 💪</p>
+            <p className="text-sm text-gray-500">Rejoignez l'aventure Fitidea et suivez vos produits.</p>
           </div>
 
           {errorMessage && (
@@ -61,7 +57,29 @@ function Login() {
             </div>
           )}
 
+          {successMessage && (
+            <div className="mb-6 rounded-lg bg-green-50 border border-green-200 text-green-700 p-3 text-sm">
+              {successMessage}
+            </div>
+          )}
+
           <form className="space-y-5" onSubmit={handleSubmit}>
+            <div className="space-y-2">
+              <label className="block text-sm font-medium text-gray-700" htmlFor="name">
+                Nom complet
+              </label>
+              <input
+                id="name"
+                name="name"
+                type="text"
+                required
+                value={form.name}
+                onChange={handleChange}
+                placeholder="Alex Coach"
+                className="w-full rounded-lg border border-gray-200 bg-white px-4 py-3 text-gray-900 placeholder:text-gray-400 shadow-sm focus:border-orange-400 focus:outline-none focus:ring-2 focus:ring-orange-200"
+              />
+            </div>
+
             <div className="space-y-2">
               <label className="block text-sm font-medium text-gray-700" htmlFor="email">
                 Email
@@ -96,17 +114,17 @@ function Login() {
 
             <button
               type="submit"
-              disabled={loginMutation.isPending}
+              disabled={registerMutation.isPending}
               className="w-full rounded-lg bg-orange-500 px-4 py-2 text-white font-semibold shadow-sm hover:bg-orange-600 transition disabled:opacity-70 disabled:cursor-not-allowed"
             >
-              {loginMutation.isPending ? "Connexion..." : "Se connecter"}
+              {registerMutation.isPending ? "Création..." : "Créer le compte"}
             </button>
           </form>
 
           <p className="mt-6 text-center text-sm text-gray-600">
-            Pas encore de compte ?{" "}
-            <Link to="/register" className="font-semibold text-orange-500 hover:text-orange-600">
-              S'inscrire
+            Déjà un compte ?{" "}
+            <Link to="/login" className="font-semibold text-orange-500 hover:text-orange-600">
+              Se connecter
             </Link>
           </p>
         </div>
@@ -115,4 +133,4 @@ function Login() {
   );
 }
 
-export default Login;
+export default Register;
