@@ -147,8 +147,12 @@ function Favorites() {
               {favorites.map((product) => (
                 <ProductCard
                   key={product.id}
-                  product={product}
-                  isFavorite={true}
+                  id={product.id}
+                  title={product.name || product.title}
+                  price={product.price ?? product.min_price ?? product.max_price}
+                  image={product.image_url || product.image}
+                  rating={product.rating}
+                  isFavorite
                   onToggleFavorite={() => handleToggleFavorite(product.id)}
                 />
               ))}

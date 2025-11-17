@@ -4,13 +4,24 @@ import { render, screen } from "@testing-library/react";
 import Products from "./Products";
 
 const useQueryMock = vi.fn();
+const createQueryClientMock = () => ({
+  cancelQueries: vi.fn(),
+  getQueriesData: vi.fn(() => []),
+  setQueryData: vi.fn(),
+});
+
 vi.mock("@tanstack/react-query", () => ({
   useQuery: (...args) => useQueryMock(...args),
+  useQueryClient: () => createQueryClientMock(),
+  useMutation: () => ({
+    mutate: vi.fn(),
+    mutateAsync: vi.fn(),
+  }),
 }));
 
 vi.mock("../components/ProductCard", () => ({
   __esModule: true,
-  default: ({ product }) => <div data-testid="product-card">{product.name}</div>,
+  default: ({ title }) => <div data-testid="product-card">{title}</div>,
 }));
 
 afterEach(() => {
@@ -18,11 +29,11 @@ afterEach(() => {
 });
 
 it("renders loading state", () => {
-  useQueryMock.mockReturnValue({ isLoading: true, isError: false, data: [] });
+  useQueryMock.mockReturnValue({ isLoading: true, isError: false, data: null });
 
-  render(<Products />);
+  const { container } = render(<Products />);
 
-  expect(screen.getByText(/Chargement des produits/)).toBeInTheDocument();
+  expect(container.querySelectorAll(".animate-pulse").length).toBeGreaterThan(0);
 });
 
 it("renders error state", () => {
@@ -38,7 +49,7 @@ it("renders product cards when data is available", () => {
     { id: 1, name: "Kettlebell" },
     { id: 2, name: "Tapis" },
   ];
-  useQueryMock.mockReturnValue({ isLoading: false, isError: false, data: products });
+  useQueryMock.mockReturnValue({ isLoading: false, isError: false, data: { items: products } });
 
   render(<Products />);
 
