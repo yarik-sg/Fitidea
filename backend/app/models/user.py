@@ -19,6 +19,7 @@ class User(Base):
     offers = relationship("Offer", back_populates="creator", cascade="all, delete-orphan")
     favorites = relationship("Favorite", back_populates="user", cascade="all, delete-orphan")
     programs = relationship("Program", back_populates="owner", cascade="all, delete-orphan")
+    favorite_programs = relationship("FavoriteProgram", back_populates="user", cascade="all, delete-orphan")
 
     def set_password(self, password: str) -> None:
         self.hashed_password = pwd_context.hash(password)
