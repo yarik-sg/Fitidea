@@ -4,7 +4,9 @@ import { useAuth } from "../lib/auth";
 
 const baseNavLinks = [
   { to: "/", label: "Accueil", end: true },
-  { to: "/products", label: "Produits" },
+  { to: "/products", label: "Suppléments" },
+  { to: "/products", label: "Salles de sport" },
+  { to: "/products", label: "Programmes" },
 ];
 
 const getUserInitial = (user) => {
