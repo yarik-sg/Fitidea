@@ -1,3 +1,4 @@
+from datetime import datetime
 from typing import List, Optional
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
@@ -8,6 +9,7 @@ from sqlalchemy.orm import Session
 from app.db.session import get_db
 from app.models.gym import Gym
 from app.schemas.gym import GymRead, GymReadWithRelations
+from app.scrapers import sync_all
 
 router = APIRouter(prefix="/gyms", tags=["gyms"])
 
@@ -23,8 +25,17 @@ def _gym_to_response(gym: Gym) -> GymReadWithRelations:
     return GymReadWithRelations(
         id=gym.id,
         name=gym.name,
+        brand=gym.brand,
         address=gym.address,
+        city=gym.city,
+        country=gym.country,
+        latitude=gym.latitude,
+        longitude=gym.longitude,
+        url=gym.url,
+        image_url=gym.image_url,
+        opened_24_7=gym.opened_24_7,
         created_at=gym.created_at,
+        last_synced=gym.last_synced,
         offers=[offer.id for offer in gym.offers],
         programs=[program.id for program in gym.programs],
     )
@@ -35,6 +46,8 @@ def list_gyms(
     *,
     db: Session = Depends(get_db),
     search: Optional[str] = Query(None, description="Filter gyms by name or address"),
+    city: Optional[str] = Query(None, description="Filter gyms by city"),
+    brand: Optional[str] = Query(None, description="Filter gyms by brand"),
     page: int = Query(1, ge=1, description="Page number for pagination"),
     page_size: int = Query(10, ge=1, le=100, description="Number of items per page"),
 ) -> dict:
@@ -44,6 +57,12 @@ def list_gyms(
     if search:
         like_pattern = f"%{search}%"
         query = query.filter(or_(Gym.name.ilike(like_pattern), Gym.address.ilike(like_pattern)))
+
+    if city:
+        query = query.filter(Gym.city.ilike(f"%{city}%"))
+
+    if brand:
+        query = query.filter(Gym.brand.ilike(f"%{brand}%"))
 
     total = query.count()
     gyms = (
@@ -69,3 +88,51 @@ def get_gym(gym_id: int, db: Session = Depends(get_db)) -> GymReadWithRelations:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Gym not found")
 
     return _gym_to_response(gym)
+
+
+class SyncResponse(BaseModel):
+    total: int
+    created: int
+    updated: int
+    synced_at: datetime
+
+
+@router.post("/sync", response_model=SyncResponse)
+def sync_gyms(db: Session = Depends(get_db)) -> SyncResponse:
+    gyms_payload = sync_all.sync_all_sources()
+    created = 0
+    updated = 0
+
+    for gym_data in gyms_payload:
+        existing = (
+            db.query(Gym)
+            .filter(Gym.name == gym_data.get("name"))
+            .filter(Gym.brand == gym_data.get("brand"))
+            .filter(Gym.city == gym_data.get("city"))
+            .first()
+        )
+
+        if existing:
+            for field, value in gym_data.items():
+                setattr(existing, field, value)
+            existing.last_synced = datetime.utcnow()
+            updated += 1
+        else:
+            db.add(
+                Gym(
+                    **gym_data,
+                    last_synced=datetime.utcnow(),
+                )
+            )
+            created += 1
+
+    db.commit()
+
+    total = db.query(Gym).count()
+
+    return SyncResponse(
+        total=total,
+        created=created,
+        updated=updated,
+        synced_at=datetime.utcnow(),
+    )
