@@ -1,26 +1,18 @@
 import React, { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useMutation } from "@tanstack/react-query";
-import apiClient from "../lib/apiClient";
+import { useAuth } from "../lib/auth";
 
 function Login() {
   const navigate = useNavigate();
+  const { login } = useAuth();
   const [form, setForm] = useState({ email: "", password: "" });
   const [errorMessage, setErrorMessage] = useState("");
 
   const loginMutation = useMutation({
     mutationFn: async () => {
-      const payload = new URLSearchParams();
-      payload.append("username", form.email);
-      payload.append("password", form.password);
-
-      const { data } = await apiClient.post("/auth/login", payload, {
-        headers: {
-          "Content-Type": "application/x-www-form-urlencoded",
-        },
-      });
-
-      localStorage.setItem("auth_token", data.access_token);
+      const payload = { username: form.email, password: form.password };
+      const data = await login(payload);
       return data;
     },
     onSuccess: () => {
@@ -29,8 +21,7 @@ function Login() {
     },
     onError: (error) => {
       const apiMessage =
-        error.response?.data?.detail ||
-        "Impossible de vous connecter. Vérifiez vos identifiants.";
+        error.response?.data?.detail || "Impossible de vous connecter. Vérifiez vos identifiants.";
       setErrorMessage(apiMessage);
     },
   });
@@ -46,69 +37,95 @@ function Login() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-orange-50/80 via-white to-white flex items-center justify-center px-4 py-10">
-      <div className="w-full max-w-md">
-        <div className="rounded-2xl border border-orange-100 bg-white shadow-sm px-6 py-8 sm:px-8 sm:py-10">
-          <div className="mb-8 text-center">
-            <h1 className="text-3xl font-semibold text-orange-500">Fitidea</h1>
-            <p className="mt-2 text-lg font-medium text-gray-800">Bienvenue de retour 👋</p>
-            <p className="text-sm text-gray-500">Connectez-vous pour accéder à vos produits.</p>
-          </div>
-
-          {errorMessage && (
-            <div className="mb-6 rounded-lg bg-red-50 border border-red-200 text-red-700 p-3 text-sm">
-              {errorMessage}
-            </div>
-          )}
-
-          <form className="space-y-5" onSubmit={handleSubmit}>
-            <div className="space-y-2">
-              <label className="block text-sm font-medium text-gray-700" htmlFor="email">
-                Email
-              </label>
-              <input
-                id="email"
-                name="email"
-                type="email"
-                required
-                value={form.email}
-                onChange={handleChange}
-                placeholder="vous@example.com"
-                className="w-full rounded-lg border border-gray-200 bg-white px-4 py-3 text-gray-900 placeholder:text-gray-400 shadow-sm focus:border-orange-400 focus:outline-none focus:ring-2 focus:ring-orange-200"
-              />
-            </div>
-
-            <div className="space-y-2">
-              <label className="block text-sm font-medium text-gray-700" htmlFor="password">
-                Mot de passe
-              </label>
-              <input
-                id="password"
-                name="password"
-                type="password"
-                required
-                value={form.password}
-                onChange={handleChange}
-                placeholder="********"
-                className="w-full rounded-lg border border-gray-200 bg-white px-4 py-3 text-gray-900 placeholder:text-gray-400 shadow-sm focus:border-orange-400 focus:outline-none focus:ring-2 focus:ring-orange-200"
-              />
-            </div>
-
-            <button
-              type="submit"
-              disabled={loginMutation.isPending}
-              className="w-full rounded-lg bg-orange-500 px-4 py-2 text-white font-semibold shadow-sm hover:bg-orange-600 transition disabled:opacity-70 disabled:cursor-not-allowed"
-            >
-              {loginMutation.isPending ? "Connexion..." : "Se connecter"}
-            </button>
-          </form>
-
-          <p className="mt-6 text-center text-sm text-gray-600">
-            Pas encore de compte ?{" "}
-            <Link to="/register" className="font-semibold text-orange-500 hover:text-orange-600">
-              S'inscrire
-            </Link>
+    <div className="min-h-screen bg-gradient-to-b from-orange-50/80 via-white to-white px-4 py-12">
+      <div className="mx-auto flex max-w-5xl flex-col items-center gap-12 lg:flex-row lg:justify-between">
+        <div className="max-w-xl space-y-4 text-center lg:text-left">
+          <p className="inline-flex items-center gap-2 rounded-full bg-orange-50 px-3 py-1 text-sm font-semibold text-orange-600 shadow-sm">
+            🔒 Connexion sécurisée
           </p>
+          <h1 className="text-4xl font-black text-gray-900 sm:text-5xl">Connexion</h1>
+          <p className="text-lg text-gray-600">Accédez à votre espace Fitidea en toute simplicité.</p>
+          <div className="grid grid-cols-1 gap-3 text-left sm:grid-cols-2">
+            <div className="rounded-2xl border border-orange-100 bg-white p-4 shadow-lg shadow-orange-50">
+              <p className="text-sm font-semibold text-gray-900">Interface premium</p>
+              <p className="text-sm text-gray-600">Design inspiré de Stripe et Linear pour une expérience fluide.</p>
+            </div>
+            <div className="rounded-2xl border border-orange-100 bg-white p-4 shadow-lg shadow-orange-50">
+              <p className="text-sm font-semibold text-gray-900">Favoris instantanés</p>
+              <p className="text-sm text-gray-600">Retrouvez vos produits préférés dès la connexion.</p>
+            </div>
+          </div>
+        </div>
+
+        <div className="w-full max-w-md">
+          <div className="rounded-2xl border border-orange-100 bg-white p-8 shadow-lg shadow-orange-50">
+            <div className="mb-6 space-y-1 text-center">
+              <h2 className="text-2xl font-bold text-gray-900">Connexion</h2>
+              <p className="text-sm font-medium text-gray-600">Accédez à votre espace Fitidea</p>
+            </div>
+
+            {errorMessage && (
+              <div className="mb-5 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+                {errorMessage}
+              </div>
+            )}
+
+            <form className="space-y-4" onSubmit={handleSubmit}>
+              <div className="space-y-2">
+                <label className="text-sm font-semibold text-gray-700" htmlFor="email">
+                  Email
+                </label>
+                <input
+                  id="email"
+                  name="email"
+                  type="email"
+                  required
+                  value={form.email}
+                  onChange={handleChange}
+                  placeholder="vous@example.com"
+                  className="w-full rounded-xl border border-orange-100 bg-white px-4 py-3 text-sm font-medium text-gray-900 placeholder:text-gray-400 shadow-sm transition focus:border-orange-400 focus:outline-none focus:ring-2 focus:ring-orange-100"
+                />
+              </div>
+
+              <div className="space-y-2">
+                <label className="text-sm font-semibold text-gray-700" htmlFor="password">
+                  Mot de passe
+                </label>
+                <input
+                  id="password"
+                  name="password"
+                  type="password"
+                  required
+                  value={form.password}
+                  onChange={handleChange}
+                  placeholder="********"
+                  className="w-full rounded-xl border border-orange-100 bg-white px-4 py-3 text-sm font-medium text-gray-900 placeholder:text-gray-400 shadow-sm transition focus:border-orange-400 focus:outline-none focus:ring-2 focus:ring-orange-100"
+                />
+              </div>
+
+              <div className="flex items-center justify-between text-sm text-gray-600">
+                <span>Mot de passe oublié ?</span>
+                <Link to="/signup" className="font-semibold text-orange-600 hover:text-orange-700">
+                  Créer un compte
+                </Link>
+              </div>
+
+              <button
+                type="submit"
+                disabled={loginMutation.isPending}
+                className="mt-2 inline-flex w-full items-center justify-center gap-2 rounded-xl bg-orange-500 px-4 py-3 text-sm font-semibold text-white shadow-lg shadow-orange-200 transition hover:scale-[1.01] hover:bg-orange-600 disabled:cursor-not-allowed disabled:opacity-70"
+              >
+                {loginMutation.isPending ? "Connexion..." : "Se connecter"}
+              </button>
+            </form>
+
+            <p className="mt-6 text-center text-sm text-gray-600">
+              Pas encore de compte ?{" "}
+              <Link to="/signup" className="font-semibold text-orange-600 hover:text-orange-700">
+                S'inscrire
+              </Link>
+            </p>
+          </div>
         </div>
       </div>
     </div>
