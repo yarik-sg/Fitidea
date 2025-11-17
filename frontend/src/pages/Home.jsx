@@ -4,25 +4,25 @@ const categories = [
   {
     icon: "📋",
     title: "Programmes",
-    description: "Plans prêts à lancer pour coachs et studios en quête d'impact.",
+    description: "Plans structurés pour progresser en force, cardio ou mobilité.",
     link: "Découvrir →",
   },
   {
     icon: "🎒",
     title: "Accessoires",
-    description: "Comparaisons rapides pour choisir le meilleur équipement.",
+    description: "Bandes, haltères, sacs et tout le matériel pour booster vos séances.",
     link: "Découvrir →",
   },
   {
-    icon: "🤝",
-    title: "Coaching",
-    description: "Outils pour structurer, vendre et suivre vos offres premium.",
+    icon: "🧪",
+    title: "Suppléments",
+    description: "Whey, créatine, BCAA : comparez ingrédients, dosages et avis.",
     link: "Découvrir →",
   },
   {
-    icon: "🥑",
-    title: "Nutrition",
-    description: "Guides et packs pour allier saveurs, équilibre et résultats.",
+    icon: "🏋️",
+    title: "Salles de sport",
+    description: "Localisez des salles, studios et box adaptés à votre pratique.",
     link: "Découvrir →",
   },
 ];
@@ -30,23 +30,23 @@ const categories = [
 const featureBlocks = [
   {
     icon: "💡",
-    title: "Idées instantanées",
-    description: "Des concepts clairs pour lancer vos nouveautés sans partir de zéro.",
+    title: "Comparaisons express",
+    description: "Filtres clairs pour analyser suppléments, salles et programmes en 1 clic.",
   },
   {
     icon: "🛠️",
-    title: "Outils prêts à l'emploi",
-    description: "Templates, fiches produits et checklists pensés pour le fitness.",
+    title: "Guides d'équipement",
+    description: "Fiches détaillées whey, créatine, accessoires et packs mobilité.",
   },
   {
     icon: "🤝",
-    title: "Communauté engagée",
-    description: "Partagez vos découvertes et co-créez avec des pros passionnés.",
+    title: "Sélections partagées",
+    description: "Listes collaboratives pour choisir une salle, un stack ou une routine.",
   },
   {
     icon: "📈",
-    title: "Analyse intelligente",
-    description: "Comparez les performances, suivez les prix et anticipez la demande.",
+    title: "Suivi des performances",
+    description: "Tableaux clairs pour suivre vos favoris, vos prix et vos résultats.",
   },
 ];
 
@@ -59,14 +59,14 @@ function Home() {
         <div className="relative grid gap-10 lg:grid-cols-[1.1fr,0.9fr] lg:items-center">
           <div className="space-y-6">
             <span className="inline-flex w-fit items-center rounded-full bg-orange-50 px-3 py-1 text-xs font-semibold text-orange-600 ring-1 ring-orange-100">
-              Fitidea • SaaS Fitness
+              Fitidea • Suppléments • Salles • Programmes
             </span>
             <div className="space-y-3">
               <h1 className="text-4xl font-bold leading-tight text-gray-900 sm:text-5xl">
-                Boostez vos lancements fitness avec une page d'accueil taillée pour l'action.
+                Comparez vos suppléments, trouvez votre salle et suivez le bon programme.
               </h1>
               <p className="text-base text-gray-600 sm:text-lg">
-                Comparez, sélectionnez et partagez les meilleurs produits et services fitness. Une expérience moderne, lumineuse et entièrement pensée pour les créateurs.
+                Fitidea rassemble tout ce qui compte pour les sportifs : stacks whey + créatine, cartes des salles proches et programmes guidés pour progresser sans chercher partout.
               </p>
             </div>
             <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
@@ -74,7 +74,7 @@ function Home() {
                 className="inline-flex items-center justify-center rounded-xl bg-orange-500 px-6 py-3 text-sm font-semibold text-white shadow-lg shadow-orange-200 transition hover:-translate-y-0.5 hover:bg-orange-600 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-orange-500"
                 href="/products"
               >
-                Explorer les produits
+                Explorer les suppléments
               </a>
               <a
                 className="inline-flex items-center justify-center rounded-xl border border-orange-200 px-6 py-3 text-sm font-semibold text-orange-600 transition hover:-translate-y-0.5 hover:border-orange-300 hover:bg-orange-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-orange-500"
@@ -84,8 +84,8 @@ function Home() {
               </a>
             </div>
             <div className="flex flex-wrap gap-3 text-sm text-gray-600">
-              <span className="flex items-center gap-2 rounded-full bg-gray-50 px-3 py-1 ring-1 ring-orange-100">⚡ Interface rapide</span>
-              <span className="flex items-center gap-2 rounded-full bg-gray-50 px-3 py-1 ring-1 ring-orange-100">🧠 Recos data-driven</span>
+              <span className="flex items-center gap-2 rounded-full bg-gray-50 px-3 py-1 ring-1 ring-orange-100">⚡ Comparaisons rapides</span>
+              <span className="flex items-center gap-2 rounded-full bg-gray-50 px-3 py-1 ring-1 ring-orange-100">🧠 Recos sportives</span>
               <span className="flex items-center gap-2 rounded-full bg-gray-50 px-3 py-1 ring-1 ring-orange-100">🤝 Favoris synchronisés</span>
             </div>
           </div>
@@ -102,10 +102,10 @@ function Home() {
                 </div>
                 <div className="grid gap-3 sm:grid-cols-2">
                   {[
-                    { title: "Coaching hybride", subtitle: "Connecté & personnalisé" },
-                    { title: "Packs mobilité", subtitle: "Accessoires malins" },
-                    { title: "Nutrition clean", subtitle: "Recettes express" },
-                    { title: "Studios digitaux", subtitle: "Expériences premium" },
+                    { title: "Whey & créatine", subtitle: "Dosages optimisés" },
+                    { title: "Pré-workout", subtitle: "Formules testées" },
+                    { title: "Accessoires", subtitle: "Grip, bandes, sacs" },
+                    { title: "Salles proches", subtitle: "Equipements & horaires" },
                   ].map((item) => (
                     <div
                       key={item.title}
@@ -132,8 +132,8 @@ function Home() {
       <section className="section-shell section-spacing py-12 sm:py-16">
         <div className="space-y-2 text-center">
           <p className="eyebrow text-orange-600">Catégories</p>
-          <h2 className="text-3xl font-bold text-gray-900 sm:text-4xl">Tout pour accélérer vos projets fitness</h2>
-          <p className="text-base text-gray-600 sm:text-lg">Choisissez une catégorie et découvrez des idées prêtes à tester.</p>
+          <h2 className="text-3xl font-bold text-gray-900 sm:text-4xl">Suppléments, salles et programmes en un seul endroit</h2>
+          <p className="text-base text-gray-600 sm:text-lg">Choisissez une catégorie et découvrez les options les plus adaptées à vos objectifs.</p>
         </div>
         <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
           {categories.map((category) => (
@@ -159,22 +159,22 @@ function Home() {
         <div className="relative overflow-hidden rounded-3xl border border-orange-100 bg-gradient-to-r from-orange-500 via-orange-500 to-orange-400 p-8 shadow-lg sm:p-10">
           <div className="absolute -right-10 -top-10 h-36 w-36 rounded-full bg-white/10 blur-3xl" />
           <div className="space-y-4 text-white">
-            <span className="pill bg-white/20 text-white">💡 Pensée pour les créateurs fitness</span>
+            <span className="pill bg-white/20 text-white">💡 Pensée pour les sportifs ambitieux</span>
             <h2 className="text-3xl font-bold leading-tight sm:text-4xl">
-              Structurez vos idées, testez vos offres et inspirez votre communauté.
+              Choisissez votre stack, votre salle et un programme qui tient la route.
             </h2>
             <p className="text-base text-white/80 sm:text-lg">
-              Fitidea rassemble vos comparatifs, vos favoris et vos inspirations dans un espace unique. Passez de l'idée à l'expérience en quelques minutes.
+              Fitidea centralise vos comparatifs de suppléments, vos listes de salles et vos plans d'entraînement. Vous passez de l'idée à la séance en quelques minutes.
             </p>
             <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
               <a
                 className="inline-flex items-center justify-center rounded-xl bg-white px-5 py-3 text-sm font-semibold text-orange-600 shadow-md transition hover:-translate-y-0.5 hover:shadow-lg"
                 href="/register"
               >
-                Lancer mon espace
+                Créer mon espace sportif
               </a>
               <a className="inline-flex items-center text-sm font-semibold text-white" href="/products">
-                Voir les inspirations →
+                Voir les comparatifs →
               </a>
             </div>
           </div>
@@ -186,22 +186,22 @@ function Home() {
         <div className="grid gap-8 lg:grid-cols-2 lg:items-center">
           <div className="space-y-4">
             <p className="eyebrow text-orange-600">Comparaison intelligente</p>
-            <h2 className="text-3xl font-bold text-gray-900 sm:text-4xl">Décidez vite, gardez le focus sur vos clients</h2>
+            <h2 className="text-3xl font-bold text-gray-900 sm:text-4xl">Décidez vite, gardez le focus sur vos performances</h2>
             <p className="text-base text-gray-600 sm:text-lg">
-              Un tableau clair pour suivre les prix, les avis et les offres alternatives. Vous choisissez ce qui compte, Fitidea fait le reste.
+              Un tableau clair pour comparer whey, créatine, pré-workout ou salles de sport. Vous choisissez vos critères, Fitidea vous montre les meilleures options.
             </p>
             <ul className="space-y-3 text-sm text-gray-700">
-              <li className="flex items-start gap-3"><span className="text-xl">🛒</span><span>Vue synthétique des produits clés et des options du marché.</span></li>
-              <li className="flex items-start gap-3"><span className="text-xl">📊</span><span>Filtres rapides pour comparer performances, prix et exclusivités.</span></li>
-              <li className="flex items-start gap-3"><span className="text-xl">🔗</span><span>Favoris synchronisés pour partager vos sélections en équipe.</span></li>
+              <li className="flex items-start gap-3"><span className="text-xl">🛒</span><span>Vue synthétique des protéines, boosters et équipements clés.</span></li>
+              <li className="flex items-start gap-3"><span className="text-xl">📊</span><span>Filtres rapides pour comparer dosages, labels qualité et prix.</span></li>
+              <li className="flex items-start gap-3"><span className="text-xl">🏋️‍♀️</span><span>Repérez les salles selon l'équipement, les horaires et les avis.</span></li>
             </ul>
           </div>
           <div className="rounded-3xl border border-orange-100 bg-white p-8 shadow-lg">
             <div className="flex h-full flex-col items-center justify-center gap-4 text-center">
               <div className="flex h-20 w-20 items-center justify-center rounded-full bg-orange-50 text-4xl">🛒📊</div>
-              <h3 className="text-2xl font-semibold text-gray-900">Comparateur intuitif</h3>
+              <h3 className="text-2xl font-semibold text-gray-900">Comparateur fitness</h3>
               <p className="text-gray-600">
-                Une vue moderne pour visualiser l'essentiel et prendre des décisions en un clin d'œil, sur mobile comme sur desktop.
+                Une vue moderne pour visualiser l'essentiel et prendre des décisions en un clin d'œil sur vos compléments, salles et plans d'entraînement.
               </p>
               <a className="text-sm font-semibold text-orange-600" href="/favorites">
                 Voir mes favoris →
@@ -215,9 +215,9 @@ function Home() {
       <section className="section-shell section-spacing py-12 sm:py-16">
         <div className="space-y-2 text-center">
           <p className="eyebrow text-orange-600">Fonctionnalités clés</p>
-          <h2 className="text-3xl font-bold text-gray-900 sm:text-4xl">Tout ce qu'il faut pour un SaaS fitness moderne</h2>
+          <h2 className="text-3xl font-bold text-gray-900 sm:text-4xl">Tout ce qu'il faut pour un parcours sportif complet</h2>
           <p className="text-base text-gray-600 sm:text-lg">
-            Des modules rapides à déployer, une expérience cohérente, une esthétique premium blanc + orange.
+            Comparatifs de suppléments, cartographie des salles et programmes guidés dans une interface claire blanc + orange.
           </p>
         </div>
         <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
