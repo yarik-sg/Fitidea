@@ -65,7 +65,7 @@ function SearchBar({ value, onChange, onClear }) {
         type="search"
         value={value}
         onChange={(event) => onChange(event.target.value)}
-        placeholder="Rechercher un produit, une marque..."
+        placeholder="Rechercher un supplément, une marque..."
         className="w-full rounded-2xl border border-orange-100 bg-white px-5 py-3 pl-12 text-base text-gray-900 shadow-sm shadow-orange-50 transition focus:border-orange-300 focus:outline-none focus:ring-2 focus:ring-orange-200"
       />
       {value ? (
@@ -222,7 +222,7 @@ function SortBar({ sort, onChange, total, isUpdating }) {
     <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-orange-100 bg-white px-4 py-3 shadow-sm shadow-orange-50">
       <div className="flex items-center gap-2 text-sm text-gray-600">
         <span className="rounded-full bg-orange-50 px-3 py-1 text-xs font-semibold uppercase tracking-[0.18em] text-orange-700">Catalogue</span>
-        <span className="text-gray-800">{total} produits</span>
+        <span className="text-gray-800">{total} suppléments</span>
         {isUpdating ? (
           <span className="flex items-center gap-2 text-xs font-semibold text-orange-600">
             <span className="h-2 w-2 animate-pulse rounded-full bg-orange-500" />
@@ -349,7 +349,7 @@ function EmptyState({ onReset, hasQuery }) {
       <p className="mt-2 text-sm text-gray-600">
         {hasQuery
           ? "Ajustez vos filtres ou modifiez votre recherche pour découvrir plus d'options."
-          : "Ajoutez un mot-clé ou choisissez une catégorie pour explorer les produits."}
+          : "Ajoutez un mot-clé ou choisissez une catégorie pour explorer les suppléments."}
       </p>
       <div className="mt-5 flex justify-center gap-3">
         <button
@@ -372,7 +372,7 @@ function ErrorState({ onRetry }) {
           <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-white text-2xl shadow-md shadow-orange-100">⚠️</div>
           <div>
             <p className="text-lg font-semibold text-gray-900">Une erreur est survenue</p>
-            <p className="text-sm text-gray-600">Impossible de charger les produits pour le moment. Réessayez dans un instant.</p>
+            <p className="text-sm text-gray-600">Impossible de charger les suppléments pour le moment. Réessayez dans un instant.</p>
           </div>
         </div>
         <button
@@ -510,11 +510,11 @@ function Products() {
             <div className="space-y-2">
               <p className="inline-flex items-center gap-2 rounded-full bg-orange-100 px-4 py-2 text-xs font-semibold uppercase tracking-[0.2em] text-orange-700">
                 <span className="inline-flex h-6 w-6 items-center justify-center rounded-full bg-white text-base">📦</span>
-                Tous les produits
-              </p>
-              <h1 className="text-3xl font-bold text-gray-900 sm:text-4xl">Catalogue premium Fitidea</h1>
-              <p className="max-w-3xl text-sm text-gray-600">
-                Explorez, filtrez et comparez en un clin d'œil. Une expérience inspirée d'Idealo, Google Shopping et Amazon pour trouver votre prochaine offre.
+                Tous les suppléments
+            </p>
+            <h1 className="text-3xl font-bold text-gray-900 sm:text-4xl">Catalogue premium de suppléments Fitidea</h1>
+            <p className="max-w-3xl text-sm text-gray-600">
+                Explorez, filtrez et comparez en un clin d'œil. Une expérience inspirée d'Idealo, Google Shopping et Amazon pour trouver vos prochains suppléments.
               </p>
             </div>
             <div className="flex items-center gap-3">
