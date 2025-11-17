@@ -4,42 +4,55 @@ import { MemoryRouter } from "react-router-dom";
 
 import ProductCard from "./ProductCard";
 
-const product = {
+const baseProduct = {
   id: 1,
-  name: "Test Product",
-  description: "A useful product",
-  price: "19.99",
-  category: "Accessoires",
+  name: "Gourde inox",
+  brand: "Fitidea",
+  image_url: "https://example.com/gourde.jpg",
+  min_price: 19,
+  max_price: 39,
+  rating: 4.2,
+  offers_count: 3,
 };
 
-function renderCard(props = {}) {
-  return render(
+const renderCard = (props = {}) =>
+  render(
     <MemoryRouter>
-      <ProductCard product={product} {...props} />
+      <ProductCard product={baseProduct} {...props} />
     </MemoryRouter>
   );
-}
 
-it("renders product details", () => {
-  renderCard();
+describe("ProductCard", () => {
+  it("renders product information with pricing and rating", () => {
+    renderCard();
 
-  expect(screen.getByText(/Test Product/)).toBeInTheDocument();
-  expect(screen.getByText(/19.99/)).toBeInTheDocument();
-  expect(screen.getByText(/Accessoires/)).toBeInTheDocument();
-  expect(screen.getByText(/Voir le détail/)).toHaveAttribute("href", "/products/1");
-});
+    expect(screen.getByText(/Gourde inox/)).toBeInTheDocument();
+    expect(screen.getByText(/Fitidea/)).toBeInTheDocument();
+    expect(screen.getByText("19€ - 39€")).toBeInTheDocument();
+    expect(screen.getByText(/⭐⭐⭐⭐✩/)).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: /Voir le produit/ })).toHaveAttribute(
+      "href",
+      "/products/1"
+    );
+  });
 
-it("triggers callback when action button is clicked", () => {
-  const onAction = vi.fn();
+  it("shows a placeholder when no image is provided", () => {
+    renderCard({ product: { ...baseProduct, image_url: undefined } });
 
-  renderCard({ actionLabel: "Ajouter", onAction });
+    expect(screen.getByText("🛒")).toBeInTheDocument();
+  });
 
-  fireEvent.click(screen.getByRole("button", { name: /Ajouter/ }));
-  expect(onAction).toHaveBeenCalledWith(product);
-});
+  it("calls the favorite toggle callback without reloading", () => {
+    const onToggleFavorite = vi.fn();
+    renderCard({ isFavorite: true, onToggleFavorite });
 
-it("shows fallback category when none is provided", () => {
-  renderCard({ product: { ...product, category: undefined } });
+    fireEvent.click(screen.getByRole("button", { name: /Retirer des favoris/ }));
+    expect(onToggleFavorite).toHaveBeenCalledTimes(1);
+  });
 
-  expect(screen.getByText(/Catégorie/)).toBeInTheDocument();
+  it("falls back to min price label when only min price is present", () => {
+    renderCard({ product: { ...baseProduct, max_price: undefined } });
+
+    expect(screen.getByText("À partir de 19€")).toBeInTheDocument();
+  });
 });

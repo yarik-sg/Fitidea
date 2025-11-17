@@ -34,8 +34,8 @@ function Favorites() {
             <ProductCard
               key={product.id}
               product={product}
-              actionLabel={mutation.isPending ? "..." : "Retirer"}
-              onAction={() => mutation.mutate(product.id)}
+              isFavorite
+              onToggleFavorite={() => mutation.mutate(product.id)}
             />
           ))}
         </div>

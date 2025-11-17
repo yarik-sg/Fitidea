@@ -10,7 +10,7 @@ vi.mock("./apiClient", () => ({
   },
 }));
 
-const wrapper = ({ children }) => <AuthProvider>{children}</AuthProvider>;
+const wrapper = ({ children }) => React.createElement(AuthProvider, null, children);
 
 beforeEach(() => {
   localStorage.clear();
