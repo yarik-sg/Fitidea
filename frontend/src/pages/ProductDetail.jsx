@@ -3,6 +3,7 @@ import { useParams } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import apiClient from "../lib/apiClient";
 import { Button } from "../components/ui/button";
+import { Badge } from "../components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "../components/ui/card";
 
 function ProductDetail() {
@@ -27,25 +28,27 @@ function ProductDetail() {
     },
   });
 
-  if (isLoading) return <p>Chargement...</p>;
-  if (isError || !product) return <p>Produit introuvable.</p>;
+  if (isLoading) return <p className="text-muted-foreground">Chargement...</p>;
+  if (isError || !product) return <p className="text-destructive">Produit introuvable.</p>;
 
   return (
     <div className="grid gap-8 md:grid-cols-3">
-      <Card className="md:col-span-2 border-slate-800 bg-slate-900/70">
+      <Card className="md:col-span-2">
         <CardHeader>
-          <CardTitle className="text-3xl text-slate-50">{product.name}</CardTitle>
-          <p className="text-slate-400">{product.category}</p>
-        </CardHeader>
-        <CardContent className="space-y-4 text-slate-200">
-          <p>{product.description}</p>
-          <div className="flex items-center space-x-2 text-lg font-semibold text-emerald-400">
-            <span>{product.price} €</span>
+          <div className="flex items-start justify-between gap-3">
+            <div className="space-y-2">
+              <CardTitle className="text-3xl text-white">{product.name}</CardTitle>
+              <Badge variant="outline">{product.category}</Badge>
+            </div>
+            <span className="text-xl font-semibold text-primary">{product.price} €</span>
           </div>
+        </CardHeader>
+        <CardContent className="space-y-4 text-muted-foreground">
+          <p>{product.description}</p>
         </CardContent>
       </Card>
       <div className="space-y-4">
-        <Card className="border-slate-800 bg-slate-900/70">
+        <Card>
           <CardHeader>
             <CardTitle className="text-xl">Actions</CardTitle>
           </CardHeader>

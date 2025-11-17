@@ -27,15 +27,15 @@ function Login() {
 
   return (
     <div className="mx-auto max-w-md">
-      <Card className="border-slate-800 bg-slate-900/80">
+      <Card>
         <CardHeader>
           <CardTitle className="text-2xl">Connexion</CardTitle>
-          <p className="text-sm text-slate-400">Ravi de vous revoir !</p>
+          <p className="text-sm text-muted-foreground">Ravi de vous revoir !</p>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="space-y-2">
-              <label className="text-sm text-slate-200" htmlFor="email">
+              <label className="text-sm text-foreground/80" htmlFor="email">
                 Email
               </label>
               <Input
@@ -49,7 +49,7 @@ function Login() {
               />
             </div>
             <div className="space-y-2">
-              <label className="text-sm text-slate-200" htmlFor="password">
+              <label className="text-sm text-foreground/80" htmlFor="password">
                 Mot de passe
               </label>
               <Input
@@ -63,14 +63,14 @@ function Login() {
               />
             </div>
             {mutation.isError && (
-              <p className="text-sm text-red-400">Identifiants invalides, veuillez réessayer.</p>
+              <p className="text-sm text-destructive">Identifiants invalides, veuillez réessayer.</p>
             )}
             <Button type="submit" className="w-full" disabled={mutation.isPending}>
               {mutation.isPending ? "Connexion..." : "Se connecter"}
             </Button>
-            <p className="text-center text-sm text-slate-400">
+            <p className="text-center text-sm text-muted-foreground">
               Pas encore de compte ? {" "}
-              <Link to="/signup" className="text-emerald-400 hover:underline">
+              <Link to="/signup" className="text-primary hover:text-primary/80">
                 Inscrivez-vous
               </Link>
             </p>
