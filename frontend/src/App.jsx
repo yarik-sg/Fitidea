@@ -9,6 +9,7 @@ import ProductDetail from "./pages/ProductDetail";
 import SupplementDetail from "./pages/SupplementDetail";
 import GymDetail from "./pages/GymDetail";
 import ProgramDetail from "./pages/ProgramDetail";
+import CoachDetail from "./pages/CoachDetail";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
 import Favorites from "./pages/Favorites";
@@ -35,6 +36,7 @@ function App() {
           <Route path="/supplements/:id" element={<SupplementDetail />} />
           <Route path="/gyms/:id" element={<GymDetail />} />
           <Route path="/programs/:id" element={<ProgramDetail />} />
+          <Route path="/coaches/:id" element={<CoachDetail />} />
           <Route path="/gyms" element={<Gyms />} />
           <Route path="/programs" element={<Programs />} />
           <Route
