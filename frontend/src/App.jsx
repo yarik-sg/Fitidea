@@ -6,6 +6,7 @@ import Products from "./pages/Products";
 import Gyms from "./pages/Gyms";
 import Programs from "./pages/Programs";
 import ProductDetail from "./pages/ProductDetail";
+import Compare from "./pages/Compare";
 import SupplementDetail from "./pages/SupplementDetail";
 import GymDetail from "./pages/GymDetail";
 import ProgramDetail from "./pages/ProgramDetail";
@@ -33,6 +34,7 @@ function App() {
           <Route path="/" element={<Home />} />
           <Route path="/products" element={<Products />} />
           <Route path="/products/:id" element={<ProductDetail />} />
+          <Route path="/compare" element={<Compare />} />
           <Route path="/supplements/:id" element={<SupplementDetail />} />
           <Route path="/gyms/:id" element={<GymDetail />} />
           <Route path="/programs/:id" element={<ProgramDetail />} />

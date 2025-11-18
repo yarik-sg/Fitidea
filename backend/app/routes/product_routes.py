@@ -1,8 +1,8 @@
-from decimal import Decimal
 from typing import List, Optional
 
-from fastapi import APIRouter, Depends, HTTPException, Query, status
+from fastapi import APIRouter, Body, Depends, HTTPException, Query, Request, status
 from pydantic import BaseModel, Field
+from sqlalchemy import or_
 from sqlalchemy.orm import Session
 
 from app.db.session import get_db
@@ -10,8 +10,13 @@ from app.models.offer import Offer
 from app.models.product import Product
 from app.schemas.offer import OfferRead
 from app.schemas.product import ProductRead
+from app.services.product_ingest_service import ingest_product
 
 router = APIRouter(prefix="/products", tags=["products"])
+
+
+async def get_redis_client(request: Request):
+    return getattr(request.app.state, "redis", None)
 
 
 class ProductWithOffers(ProductRead):
@@ -33,8 +38,8 @@ def list_products(
     *,
     db: Session = Depends(get_db),
     name: Optional[str] = Query(None, description="Filter by product name"),
-    min_price: Optional[Decimal] = Query(None, description="Filter by minimum price"),
-    max_price: Optional[Decimal] = Query(None, description="Filter by maximum price"),
+    min_price: Optional[float] = Query(None, description="Filter by minimum price"),
+    max_price: Optional[float] = Query(None, description="Filter by maximum price"),
     page: int = Query(1, ge=1, description="Page number for pagination"),
     page_size: int = Query(10, ge=1, le=100, description="Number of items per page"),
 ) -> dict:
@@ -47,6 +52,82 @@ def list_products(
         query = query.filter(Product.price >= min_price)
     if max_price is not None:
         query = query.filter(Product.price <= max_price)
+
+    total = query.count()
+    products = (
+        query.order_by(Product.created_at.desc())
+        .offset((page - 1) * page_size)
+        .limit(page_size)
+        .all()
+    )
+
+    return {
+        "items": [ProductRead.from_orm(product) for product in products],
+        "total": total,
+        "page": page,
+        "page_size": page_size,
+    }
+
+
+@router.post("/scrape", response_model=ProductRead)
+async def scrape_and_save_product(
+    url: str = Body(..., embed=True),
+    source: str = Body(..., embed=True),
+    db: Session = Depends(get_db),
+    redis=Depends(get_redis_client),
+):
+    product = await ingest_product(url, source, db, redis)
+    return ProductRead.from_orm(product)
+
+
+@router.post("/scrape-bulk", response_model=List[ProductRead])
+async def bulk_scrape_products(
+    items: List[dict] = Body(...),
+    db: Session = Depends(get_db),
+    redis=Depends(get_redis_client),
+):
+    results: List[Product] = []
+    for item in items:
+        url = item.get("url")
+        source = item.get("source")
+        if not url or not source:
+            continue
+        product = await ingest_product(url, source, db, redis)
+        results.append(product)
+    return [ProductRead.from_orm(product) for product in results]
+
+
+@router.get("/search", response_model=PaginatedProductsResponse)
+def search_products(
+    *,
+    db: Session = Depends(get_db),
+    q: Optional[str] = Query(None, description="Recherche texte"),
+    category: Optional[str] = Query(None),
+    brand: Optional[str] = Query(None),
+    price_min: Optional[float] = Query(None),
+    price_max: Optional[float] = Query(None),
+    rating_min: Optional[float] = Query(None),
+    source: Optional[str] = Query(None),
+    page: int = Query(1, ge=1),
+    page_size: int = Query(12, ge=1, le=100),
+):
+    query = db.query(Product)
+
+    if q:
+        like_pattern = f"%{q}%"
+        query = query.filter(or_(Product.name.ilike(like_pattern), Product.description.ilike(like_pattern)))
+    if category:
+        query = query.filter(Product.category.ilike(f"%{category}%"))
+    if brand:
+        query = query.filter(Product.brand.ilike(f"%{brand}%"))
+    if price_min is not None:
+        query = query.filter(Product.price >= price_min)
+    if price_max is not None:
+        query = query.filter(Product.price <= price_max)
+    if rating_min is not None:
+        query = query.filter(Product.rating >= rating_min)
+    if source:
+        query = query.filter(Product.source.ilike(f"%{source}%"))
 
     total = query.count()
     products = (
