@@ -1,5 +1,4 @@
 from datetime import datetime
-from decimal import Decimal
 from typing import List, Optional
 
 from pydantic import BaseModel, ConfigDict, Field
@@ -8,7 +7,14 @@ from pydantic import BaseModel, ConfigDict, Field
 class ProductBase(BaseModel):
     name: str
     description: Optional[str] = None
-    price: Decimal = Field(..., max_digits=10, decimal_places=2)
+    price: Optional[float] = Field(default=None)
+    brand: Optional[str] = None
+    category: Optional[str] = None
+    rating: Optional[float] = None
+    reviews_count: Optional[int] = None
+    images: Optional[list] = Field(default=None)
+    url: Optional[str] = None
+    source: Optional[str] = None
 
 
 class ProductCreate(ProductBase):
@@ -18,7 +24,14 @@ class ProductCreate(ProductBase):
 class ProductUpdate(BaseModel):
     name: Optional[str] = None
     description: Optional[str] = None
-    price: Optional[Decimal] = Field(None, max_digits=10, decimal_places=2)
+    price: Optional[float] = Field(default=None)
+    brand: Optional[str] = None
+    category: Optional[str] = None
+    rating: Optional[float] = None
+    reviews_count: Optional[int] = None
+    images: Optional[list] = Field(default=None)
+    url: Optional[str] = None
+    source: Optional[str] = None
 
 
 class ProductRead(ProductBase):
