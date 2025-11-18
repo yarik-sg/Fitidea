@@ -11,6 +11,7 @@ from app.models.training import (
     WorkoutWeek,
 )
 from app.models.user import User
+from passlib.context import CryptContext
 
 
 PROGRAM_GOALS = ["prise_masse", "perte_poids", "performance", "bien_etre", "full_body", "split", "hiit", "mobilité", "force"]
@@ -136,8 +137,10 @@ def seed_training_data(db: Session) -> None:
     # Ensure there is at least one user to attach favorites to.
     user = db.query(User).filter_by(id=1).first()
     if not user:
-        user = User(email="admin@example.com", full_name="Admin Test")
-        user.set_password("password")
+        # Use a local hashing context that does not rely on the global `bcrypt` backend
+        local_ctx = CryptContext(schemes=["pbkdf2_sha256"], deprecated="auto")
+        hashed = local_ctx.hash("password")
+        user = User(email="admin@example.com", full_name="Admin Test", hashed_password=hashed)
         db.add(user)
         db.commit()
         db.refresh(user)
