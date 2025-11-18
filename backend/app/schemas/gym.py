@@ -1,7 +1,7 @@
 from datetime import datetime
 from typing import List, Optional
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, ConfigDict, Field
 
 
 class GymBase(BaseModel):
@@ -42,8 +42,7 @@ class GymRead(GymBase):
     created_at: datetime
     last_synced: Optional[datetime] = None
 
-    class Config:
-        orm_mode = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class GymReadWithRelations(GymRead):
