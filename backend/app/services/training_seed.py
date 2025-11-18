@@ -10,6 +10,7 @@ from app.models.training import (
     WorkoutSession,
     WorkoutWeek,
 )
+from app.models.user import User
 
 
 PROGRAM_GOALS = ["prise_masse", "perte_poids", "performance", "bien_etre", "full_body", "split", "hiit", "mobilité", "force"]
@@ -132,7 +133,16 @@ def seed_training_data(db: Session) -> None:
     programs = _create_programs(db, coaches)
     _create_structure(db, programs)
 
+    # Ensure there is at least one user to attach favorites to.
+    user = db.query(User).filter_by(id=1).first()
+    if not user:
+        user = User(email="admin@example.com", full_name="Admin Test")
+        user.set_password("password")
+        db.add(user)
+        db.commit()
+        db.refresh(user)
+
     if not db.query(FavoriteProgram).first() and programs:
-        sample = FavoriteProgram(user_id=1, program_id=programs[0].id, added_at=datetime.utcnow())
+        sample = FavoriteProgram(user_id=user.id, program_id=programs[0].id, added_at=datetime.utcnow())
         db.add(sample)
         db.commit()
