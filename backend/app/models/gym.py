@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from datetime import datetime
 
-from sqlalchemy import Boolean, Column, DateTime, Float, Integer, String, Text, func
+from sqlalchemy import Boolean, Column, DateTime, Float, Integer, JSON, String, Text, func
 from sqlalchemy.orm import relationship
 
 from app.db.session import Base
@@ -19,6 +19,14 @@ class Gym(Base):
     country = Column(String, default="France")
     latitude = Column(Float, nullable=True)
     longitude = Column(Float, nullable=True)
+    coordinates_lat = Column(Float, nullable=True)
+    coordinates_lng = Column(Float, nullable=True)
+    opening_hours = Column(JSON, nullable=True)
+    equipment = Column(JSON, nullable=True)
+    photos = Column(JSON, nullable=True)
+    phone = Column(String, nullable=True)
+    website = Column(String, nullable=True)
+    price = Column(String, nullable=True)
     url = Column(String, nullable=True)
     image_url = Column(String, nullable=True)
     logo_url = Column(String, nullable=True)

@@ -70,6 +70,17 @@ function GymDetail() {
               <div className="flex h-full items-center justify-center text-4xl text-orange-300">🏟️</div>
             )}
           </div>
+
+          {gym?.photos?.length ? (
+            <div className="p-4">
+              <p className="text-xs font-semibold uppercase tracking-[0.2em] text-orange-600">Galerie</p>
+              <div className="mt-3 grid grid-cols-2 gap-4">
+                {gym.photos.map((img) => (
+                  <img key={img} src={img} alt={gym.name} className="h-32 w-full rounded-lg object-cover shadow" />
+                ))}
+              </div>
+            </div>
+          ) : null}
         </div>
 
         <div className="space-y-4">
@@ -93,13 +104,37 @@ function GymDetail() {
               </div>
               <div className="rounded-2xl bg-orange-50/70 p-3">
                 <p className="font-semibold text-gray-900">Horaires</p>
-                <p>{gym?.opened_24_7 ? "Ouvert 24/7" : "Selon les horaires officiels"}</p>
+                {gym?.opening_hours ? (
+                  <div className="space-y-1 text-sm text-gray-700">
+                    {Object.entries(gym.opening_hours).map(([day, hours]) => (
+                      <p key={day} className="flex items-center gap-2">
+                        <span className="font-semibold text-gray-900">{day} :</span> {hours}
+                      </p>
+                    ))}
+                  </div>
+                ) : (
+                  <p>{gym?.opened_24_7 ? "Ouvert 24/7" : "Selon les horaires officiels"}</p>
+                )}
               </div>
+              {gym?.price ? (
+                <div className="rounded-2xl bg-orange-50/70 p-3">
+                  <p className="font-semibold text-gray-900">Tarif</p>
+                  <p>{gym.price}</p>
+                </div>
+              ) : null}
+              {gym?.phone ? (
+                <div className="rounded-2xl bg-orange-50/70 p-3">
+                  <p className="font-semibold text-gray-900">Téléphone</p>
+                  <a href={`tel:${gym.phone}`} className="text-orange-600 underline">
+                    {gym.phone}
+                  </a>
+                </div>
+              ) : null}
             </div>
 
-            {gym?.url ? (
+            {gym?.website || gym?.url ? (
               <a
-                href={gym.url}
+                href={gym.website || gym.url}
                 target="_blank"
                 rel="noreferrer"
                 className="mt-4 inline-flex items-center justify-center rounded-xl bg-orange-500 px-4 py-2 text-sm font-semibold text-white shadow-md shadow-orange-200 transition hover:bg-orange-600"
@@ -111,11 +146,35 @@ function GymDetail() {
 
           <div className="rounded-3xl border border-orange-100 bg-white p-5 shadow-md shadow-orange-50">
             <p className="text-xs font-semibold uppercase tracking-[0.2em] text-orange-600">Localisation</p>
-            <h2 className="text-xl font-semibold text-gray-900">Carte à venir</h2>
-            <div className="mt-3 flex h-48 items-center justify-center rounded-2xl border border-dashed border-orange-200 bg-orange-50/50 text-sm text-gray-500">
-              📍 Intégration carte prochaine itération
-            </div>
+            <h2 className="text-xl font-semibold text-gray-900">Carte</h2>
+            {gym?.coordinates_lat && gym?.coordinates_lng ? (
+              <iframe
+                title="Carte"
+                src={`https://www.google.com/maps?q=${gym.coordinates_lat},${gym.coordinates_lng}&z=15&output=embed`}
+                className="mt-3 h-64 w-full rounded-2xl border border-orange-100"
+                allowFullScreen
+                loading="lazy"
+              />
+            ) : (
+              <div className="mt-3 flex h-48 items-center justify-center rounded-2xl border border-dashed border-orange-200 bg-orange-50/50 text-sm text-gray-500">
+                📍 Coordonnées indisponibles pour le moment
+              </div>
+            )}
           </div>
+
+          {gym?.equipment?.length ? (
+            <div className="rounded-3xl border border-orange-100 bg-white p-5 shadow-md shadow-orange-50">
+              <p className="text-xs font-semibold uppercase tracking-[0.2em] text-orange-600">Équipements</p>
+              <div className="mt-3 grid grid-cols-1 gap-2 text-sm text-gray-700">
+                {gym.equipment.map((item) => (
+                  <div key={item} className="flex items-center gap-2 rounded-xl bg-orange-50/70 px-3 py-2">
+                    <span className="text-orange-500">✔</span>
+                    <span>{item}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          ) : null}
         </div>
       </div>
 
