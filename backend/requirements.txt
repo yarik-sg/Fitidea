@@ -11,3 +11,6 @@ redis
 requests
 python-dotenv
 httpx
+email_validator
+pydantic[email]
+python-multipart
