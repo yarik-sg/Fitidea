@@ -1,7 +1,7 @@
 from datetime import datetime
 from typing import List, Optional
 
-from fastapi import APIRouter, Depends, HTTPException, Query, status
+from fastapi import APIRouter, Depends, HTTPException, Query, Request, status
 from pydantic import BaseModel
 from sqlalchemy import or_
 from sqlalchemy.orm import Session
@@ -10,9 +10,17 @@ from app.db.session import get_db
 from app.models.gym import Gym
 from app.schemas.gym import GymRead, GymReadWithRelations
 from app.services.gym_logo_service import get_gym_logo
+from app.services.gym_scraper_service import (
+    scrape_and_persist_all_gyms,
+    update_or_create_gym_from_scraping,
+)
 from app.scrapers import sync_all
 
 router = APIRouter(prefix="/gyms", tags=["gyms"])
+
+
+async def get_redis_client(request: Request):
+    return getattr(request.app.state, "redis", None)
 
 
 class PaginatedGymsResponse(BaseModel):
@@ -32,6 +40,14 @@ def _gym_to_response(gym: Gym) -> GymReadWithRelations:
         country=gym.country,
         latitude=gym.latitude,
         longitude=gym.longitude,
+        coordinates_lat=gym.coordinates_lat,
+        coordinates_lng=gym.coordinates_lng,
+        opening_hours=gym.opening_hours,
+        equipment=gym.equipment,
+        photos=gym.photos,
+        phone=gym.phone,
+        website=gym.website,
+        price=gym.price,
         url=gym.url,
         image_url=gym.image_url,
         logo_url=gym.logo_url,
@@ -138,5 +154,32 @@ def sync_gyms(db: Session = Depends(get_db)) -> SyncResponse:
         total=total,
         created=created,
         updated=updated,
+        synced_at=datetime.utcnow(),
+    )
+
+
+@router.post("/scrape", response_model=GymReadWithRelations)
+async def scrape_gym(
+    url: str,
+    gym_type: str,
+    db: Session = Depends(get_db),
+    redis=Depends(get_redis_client),
+) -> GymReadWithRelations:
+    """Scrape et retourne les infos d'un gym."""
+
+    gym = await update_or_create_gym_from_scraping(db, url, gym_type, redis)
+    return _gym_to_response(gym)
+
+
+@router.get("/scrape-all", response_model=SyncResponse)
+async def scrape_all_gyms(db: Session = Depends(get_db), redis=Depends(get_redis_client)) -> SyncResponse:
+    """Scrapper toutes les salles des réseaux et les stocker en base."""
+
+    result = await scrape_and_persist_all_gyms(db, redis)
+    total = db.query(Gym).count()
+    return SyncResponse(
+        total=total,
+        created=result.get("created", 0),
+        updated=result.get("updated", 0),
         synced_at=datetime.utcnow(),
     )
