@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from sqlalchemy import Column, DateTime, ForeignKey, Integer, Numeric, String, Text, func
 from sqlalchemy.orm import relationship
 
@@ -19,4 +21,3 @@ class Offer(Base):
     product = relationship("Product", back_populates="offers")
     gym = relationship("Gym", back_populates="offers")
     creator = relationship("User", back_populates="offers")
-    favorites = relationship("Favorite", back_populates="offer", cascade="all, delete-orphan")

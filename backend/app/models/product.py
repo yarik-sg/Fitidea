@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from sqlalchemy import Column, DateTime, Integer, Numeric, String, Text, func
 from sqlalchemy.orm import relationship
 
@@ -14,3 +16,4 @@ class Product(Base):
     created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
 
     offers = relationship("Offer", back_populates="product", cascade="all, delete-orphan")
+    favorites = relationship("Favorite", back_populates="product", cascade="all, delete-orphan")
