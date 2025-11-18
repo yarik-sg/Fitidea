@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from sqlalchemy import Column, DateTime, Integer, String, func
 from sqlalchemy.orm import relationship
 from passlib.context import CryptContext
