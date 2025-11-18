@@ -2,7 +2,14 @@ from datetime import datetime
 from random import choice
 from sqlalchemy.orm import Session
 
-from app.models.training import Coach, Exercise, FavoriteProgram, WorkoutProgram, WorkoutSession, WorkoutWeek
+from app.models.training import (
+    Coach,
+    FavoriteProgram,
+    WorkoutExercise,
+    WorkoutProgram,
+    WorkoutSession,
+    WorkoutWeek,
+)
 
 
 PROGRAM_GOALS = ["prise_masse", "perte_poids", "performance", "bien_etre", "full_body", "split", "hiit", "mobilité", "force"]
@@ -109,7 +116,7 @@ def _create_structure(db: Session, programs: list[WorkoutProgram]) -> None:
                 )
                 db.add(session)
                 for ex_index in range(1, 3):
-                    exercise = Exercise(
+                    exercise = WorkoutExercise(
                         session=session,
                         name=f"Exercice {week_number}-{session_index}-{ex_index}",
                         reps="10-12",

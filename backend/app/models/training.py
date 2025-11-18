@@ -56,11 +56,13 @@ class WorkoutSession(Base):
     duration_minutes = Column(Integer)
 
     week = relationship("WorkoutWeek", back_populates="sessions")
-    exercises = relationship("Exercise", back_populates="session", cascade="all, delete-orphan")
+    exercises = relationship(
+        "WorkoutExercise", back_populates="session", cascade="all, delete-orphan"
+    )
 
 
-class Exercise(Base):
-    __tablename__ = "exercises"
+class WorkoutExercise(Base):
+    __tablename__ = "workout_exercises"
 
     id = Column(Integer, primary_key=True)
     session_id = Column(Integer, ForeignKey("workout_sessions.id"))

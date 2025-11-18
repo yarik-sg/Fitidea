@@ -17,7 +17,7 @@ class CoachRead(CoachBase):
     id: int
 
     class Config:
-        orm_mode = True
+        from_attributes = True
 
 
 class ExerciseRead(BaseModel):
@@ -28,7 +28,7 @@ class ExerciseRead(BaseModel):
     video_url: Optional[str] = None
 
     class Config:
-        orm_mode = True
+        from_attributes = True
 
 
 class WorkoutSessionRead(BaseModel):
@@ -38,7 +38,7 @@ class WorkoutSessionRead(BaseModel):
     exercises: List[ExerciseRead] = []
 
     class Config:
-        orm_mode = True
+        from_attributes = True
 
 
 class WorkoutWeekRead(BaseModel):
@@ -47,7 +47,7 @@ class WorkoutWeekRead(BaseModel):
     sessions: List[WorkoutSessionRead] = []
 
     class Config:
-        orm_mode = True
+        from_attributes = True
 
 
 class WorkoutProgramBase(BaseModel):
@@ -65,7 +65,7 @@ class WorkoutProgramRead(WorkoutProgramBase):
     coach: Optional[CoachRead] = None
 
     class Config:
-        orm_mode = True
+        from_attributes = True
 
 
 class WorkoutProgramDetail(WorkoutProgramRead):
@@ -78,4 +78,4 @@ class FavoriteProgramRead(BaseModel):
     added_at: datetime
 
     class Config:
-        orm_mode = True
+        from_attributes = True
