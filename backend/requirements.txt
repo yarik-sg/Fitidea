@@ -9,5 +9,6 @@ passlib[bcrypt]
 python-jose[cryptography]
 redis
 requests
+beautifulsoup4
 python-dotenv
 httpx

@@ -9,6 +9,7 @@ from sqlalchemy.orm import Session
 from app.db.session import get_db
 from app.models.gym import Gym
 from app.schemas.gym import GymRead, GymReadWithRelations
+from app.services.gym_logo_service import get_gym_logo
 from app.scrapers import sync_all
 
 router = APIRouter(prefix="/gyms", tags=["gyms"])
@@ -33,6 +34,7 @@ def _gym_to_response(gym: Gym) -> GymReadWithRelations:
         longitude=gym.longitude,
         url=gym.url,
         image_url=gym.image_url,
+        logo_url=gym.logo_url,
         opened_24_7=gym.opened_24_7,
         created_at=gym.created_at,
         last_synced=gym.last_synced,
@@ -104,6 +106,10 @@ def sync_gyms(db: Session = Depends(get_db)) -> SyncResponse:
     updated = 0
 
     for gym_data in gyms_payload:
+        brand = gym_data.get("brand")
+        gym_data["logo_url"] = get_gym_logo(brand) if brand else get_gym_logo("")
+        gym_data["last_synced"] = datetime.utcnow()
+
         existing = (
             db.query(Gym)
             .filter(Gym.name == gym_data.get("name"))
@@ -115,13 +121,11 @@ def sync_gyms(db: Session = Depends(get_db)) -> SyncResponse:
         if existing:
             for field, value in gym_data.items():
                 setattr(existing, field, value)
-            existing.last_synced = datetime.utcnow()
             updated += 1
         else:
             db.add(
                 Gym(
                     **gym_data,
-                    last_synced=datetime.utcnow(),
                 )
             )
             created += 1

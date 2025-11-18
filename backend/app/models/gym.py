@@ -21,6 +21,7 @@ class Gym(Base):
     longitude = Column(Float, nullable=True)
     url = Column(String, nullable=True)
     image_url = Column(String, nullable=True)
+    logo_url = Column(String, nullable=True)
     opened_24_7 = Column(Boolean, default=False)
     last_synced = Column(DateTime, default=datetime.utcnow)
     created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)

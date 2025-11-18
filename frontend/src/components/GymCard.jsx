@@ -41,12 +41,17 @@ function GymCard({ gym }) {
       </div>
 
       <div className="mt-4 flex flex-1 flex-col gap-3">
-        <div className="space-y-1">
-          <h3 className="text-lg font-semibold text-gray-900">{gym.name}</h3>
-          <p className="text-sm text-gray-600">
-            {gym.city ? `${gym.city} · ` : ""}
-            {gym.address ?? "Adresse à venir"}
-          </p>
+        <div className="flex items-start justify-between gap-3">
+          <div className="space-y-1">
+            <h3 className="text-lg font-semibold text-gray-900">{gym.name}</h3>
+            <p className="text-sm text-gray-600">
+              {gym.city ? `${gym.city} · ` : ""}
+              {gym.address ?? "Adresse à venir"}
+            </p>
+          </div>
+          {gym.logo_url ? (
+            <img src={gym.logo_url} alt={gym.name} className="h-12 w-24 object-contain" />
+          ) : null}
         </div>
 
         <div className="mt-auto flex items-center justify-between gap-3 pt-1">
