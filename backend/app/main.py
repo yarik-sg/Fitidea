@@ -3,7 +3,8 @@ from fastapi.middleware.cors import CORSMiddleware
 import redis.asyncio as redis
 
 from app.core.config import settings
-from app.db.session import Base, SessionLocal, engine
+from app.db.base import Base  # noqa: F401  Ensures models are imported for metadata
+from app.db.session import SessionLocal, engine
 from app.routes import (
     auth_routes,
     compare_routes,
