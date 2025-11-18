@@ -14,6 +14,7 @@ class GymBase(BaseModel):
     longitude: Optional[float] = None
     url: Optional[str] = None
     image_url: Optional[str] = None
+    logo_url: Optional[str] = None
     opened_24_7: bool = False
 
 
@@ -31,6 +32,7 @@ class GymUpdate(BaseModel):
     longitude: Optional[float] = None
     url: Optional[str] = None
     image_url: Optional[str] = None
+    logo_url: Optional[str] = None
     opened_24_7: Optional[bool] = None
     last_synced: Optional[datetime] = None
 

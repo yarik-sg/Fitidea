@@ -27,12 +27,17 @@ function GymDetail() {
             </p>
           ) : null}
         </div>
-        <Link
-          to="/gyms"
-          className="inline-flex items-center gap-2 rounded-full border border-orange-200 bg-white px-4 py-2 text-sm font-semibold text-orange-600 shadow-sm transition hover:border-orange-300 hover:bg-orange-50"
-        >
-          ← Retour aux salles
-        </Link>
+        <div className="flex items-center gap-3">
+          {gym?.logo_url ? (
+            <img src={gym.logo_url} alt={gym.name} className="h-20 w-32 object-contain" />
+          ) : null}
+          <Link
+            to="/gyms"
+            className="inline-flex items-center gap-2 rounded-full border border-orange-200 bg-white px-4 py-2 text-sm font-semibold text-orange-600 shadow-sm transition hover:border-orange-300 hover:bg-orange-50"
+          >
+            ← Retour aux salles
+          </Link>
+        </div>
       </div>
 
       {isError ? (
