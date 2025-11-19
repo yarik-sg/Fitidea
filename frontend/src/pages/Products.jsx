@@ -41,7 +41,17 @@ const saveComparisons = (items) => {
 
 function ProductCard({ product, onCompare }) {
   const priceLabel = formatCurrency(product.price) || "Prix non disponible";
-  const image = Array.isArray(product.images) && product.images.length > 0 ? product.images[0] : null;
+  let image = null;
+  try {
+    const imgs = Array.isArray(product.images)
+      ? product.images
+      : typeof product.images === "string"
+      ? JSON.parse(product.images)
+      : null;
+    if (Array.isArray(imgs) && imgs.length > 0) image = imgs[0];
+  } catch (e) {
+    image = null;
+  }
 
   return (
     <div className="flex h-full flex-col gap-4 rounded-2xl border border-orange-100 bg-white p-4 shadow-sm shadow-orange-50">
@@ -239,6 +249,9 @@ function Products() {
     queryKey: ["products", filters],
     queryFn: async () => {
       const { data: response } = await apiClient.get("/products/search", { params: filters });
+      // debug: log response for troubleshooting missing images
+      // eslint-disable-next-line no-console
+      console.debug("[Products] /products/search response:", response);
       return response;
     },
   });
