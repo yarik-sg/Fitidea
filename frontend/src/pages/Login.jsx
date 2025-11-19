@@ -11,8 +11,7 @@ function Login() {
 
   const loginMutation = useMutation({
     mutationFn: async () => {
-      const payload = { username: form.email, password: form.password };
-      const data = await login(payload);
+      const data = await login({ email: form.email, password: form.password });
       return data;
     },
     onSuccess: () => {

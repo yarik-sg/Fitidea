@@ -12,7 +12,7 @@ import GymDetail from "./pages/GymDetail";
 import ProgramDetail from "./pages/ProgramDetail";
 import CoachDetail from "./pages/CoachDetail";
 import Login from "./pages/Login";
-import Register from "./pages/Register";
+import Signup from "./pages/Signup";
 import Favorites from "./pages/Favorites";
 import { useAuth } from "./lib/auth";
 
@@ -46,8 +46,8 @@ function App() {
             element={<ProtectedRoute><Favorites /></ProtectedRoute>}
           />
           <Route path="/login" element={<Login />} />
-          <Route path="/register" element={<Register />} />
-          <Route path="/signup" element={<Register />} />
+          <Route path="/register" element={<Signup />} />
+          <Route path="/signup" element={<Signup />} />
         </Routes>
       </main>
     </div>

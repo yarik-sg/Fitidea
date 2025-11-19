@@ -1,20 +1,31 @@
-import React, { useEffect, useState } from "react";
+import React from "react";
 import { Link, useParams } from "react-router-dom";
+import { useQuery } from "@tanstack/react-query";
 import ProgramCard from "../components/ProgramCard";
-
-const API_URL = import.meta.env.VITE_API_URL || "http://localhost:8000/api";
+import apiClient from "../lib/apiClient";
 
 export default function CoachDetail() {
   const { id } = useParams();
-  const [coach, setCoach] = useState(null);
-  const [programs, setPrograms] = useState([]);
 
-  useEffect(() => {
-    fetch(`${API_URL}/programs/coaches/${id}`).then((res) => res.json()).then(setCoach);
-    fetch(`${API_URL}/programs?coach_id=${id}`).then((res) => res.json()).then((data) => setPrograms(data.items || []));
-  }, [id]);
+  const coachQuery = useQuery({
+    queryKey: ["coach", id],
+    queryFn: async () => {
+      const { data } = await apiClient.get(`/programs/coaches/${id}`);
+      return data;
+    },
+    enabled: Boolean(id),
+  });
 
-  if (!coach) {
+  const programsQuery = useQuery({
+    queryKey: ["coach-programs", id],
+    queryFn: async () => {
+      const { data } = await apiClient.get("/programs", { params: { coach_id: id } });
+      return data.items || [];
+    },
+    enabled: Boolean(id),
+  });
+
+  if (coachQuery.isLoading) {
     return (
       <main className="min-h-screen bg-gray-50 pb-12 pt-8 font-sans">
         <div className="mx-auto max-w-5xl px-4 sm:px-6 lg:px-8 space-y-8">
@@ -23,6 +34,28 @@ export default function CoachDetail() {
       </main>
     );
   }
+
+  if (coachQuery.isError) {
+    return (
+      <main className="min-h-screen bg-gray-50 pb-12 pt-8 font-sans">
+        <div className="mx-auto max-w-5xl px-4 sm:px-6 lg:px-8 space-y-8">
+          <div className="rounded-3xl border border-orange-100 bg-white p-6 text-center text-sm text-gray-700 shadow-sm">
+            <p className="text-lg font-semibold text-gray-900">Coach introuvable</p>
+            <p className="text-gray-600">Nous n'avons pas pu trouver ce profil.</p>
+            <Link
+              to="/programs"
+              className="mt-4 inline-flex items-center justify-center rounded-full border border-orange-200 bg-orange-50 px-4 py-2 text-sm font-semibold text-orange-600"
+            >
+              Revenir aux programmes
+            </Link>
+          </div>
+        </div>
+      </main>
+    );
+  }
+
+  const coach = coachQuery.data;
+  const programs = programsQuery.data || [];
 
   return (
     <main className="min-h-screen bg-gray-50 pb-12 pt-8 font-sans">
@@ -65,11 +98,19 @@ export default function CoachDetail() {
               <h2 className="text-xl font-semibold text-gray-900">Suivez ses plans signatures</h2>
             </div>
           </div>
-          <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-            {programs.map((program) => (
-              <ProgramCard key={program.id} program={program} />
-            ))}
-          </div>
+          {programsQuery.isLoading ? (
+            <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+              {Array.from({ length: 3 }).map((_, idx) => (
+                <div key={idx} className="h-60 animate-pulse rounded-2xl bg-orange-50/80" />
+              ))}
+            </div>
+          ) : (
+            <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+              {programs.map((program) => (
+                <ProgramCard key={program.id} program={program} />
+              ))}
+            </div>
+          )}
         </section>
       </div>
     </main>

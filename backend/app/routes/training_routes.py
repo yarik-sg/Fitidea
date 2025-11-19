@@ -1,4 +1,5 @@
 from typing import List, Optional
+import logging
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy.orm import Session
@@ -13,8 +14,11 @@ from app.schemas.training import (
     WorkoutSessionRead,
     WorkoutWeekRead,
 )
+from app.auth.auth import get_current_user
+from app.models.user import User
 
 router = APIRouter(prefix="/programs", tags=["training"])
+logger = logging.getLogger(__name__)
 
 
 @router.get("", response_model=dict)
@@ -51,6 +55,11 @@ def list_programs(
         .offset((page - 1) * page_size)
         .limit(page_size)
         .all()
+    )
+
+    logger.info(
+        "Programs listing",
+        extra={"goal": goal, "level": level, "coach_id": coach_id, "results": total},
     )
 
     return {
@@ -116,16 +125,24 @@ def get_sessions(program_id: int, db: Session = Depends(get_db)):
 
 
 @router.post("/{program_id}/favorite", response_model=FavoriteProgramRead)
-def add_favorite(program_id: int, user_id: int, db: Session = Depends(get_db)):
+def add_favorite(
+    program_id: int,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
     program = db.query(WorkoutProgram).filter(WorkoutProgram.id == program_id).first()
     if not program:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Program not found")
 
-    favorite = db.query(FavoriteProgram).filter_by(user_id=user_id, program_id=program_id).first()
+    favorite = (
+        db.query(FavoriteProgram)
+        .filter_by(user_id=current_user.id, program_id=program_id)
+        .first()
+    )
     if favorite:
         return favorite
 
-    favorite = FavoriteProgram(user_id=user_id, program_id=program_id)
+    favorite = FavoriteProgram(user_id=current_user.id, program_id=program_id)
     db.add(favorite)
     db.commit()
     db.refresh(favorite)
@@ -133,8 +150,16 @@ def add_favorite(program_id: int, user_id: int, db: Session = Depends(get_db)):
 
 
 @router.delete("/{program_id}/favorite", status_code=status.HTTP_204_NO_CONTENT)
-def remove_favorite(program_id: int, user_id: int, db: Session = Depends(get_db)):
-    favorite = db.query(FavoriteProgram).filter_by(user_id=user_id, program_id=program_id).first()
+def remove_favorite(
+    program_id: int,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    favorite = (
+        db.query(FavoriteProgram)
+        .filter_by(user_id=current_user.id, program_id=program_id)
+        .first()
+    )
     if not favorite:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Favorite not found")
     db.delete(favorite)

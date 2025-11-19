@@ -1,7 +1,8 @@
-import React, { useEffect, useState } from "react";
+import React, { useState } from "react";
 import { Link, useParams } from "react-router-dom";
-
-const API_URL = import.meta.env.VITE_API_URL || "http://localhost:8000/api";
+import { useMutation, useQuery } from "@tanstack/react-query";
+import apiClient from "../lib/apiClient";
+import { useAuth } from "../lib/auth";
 
 function Accordion({ title, children }) {
   const [open, setOpen] = useState(false);
@@ -22,27 +23,64 @@ function Accordion({ title, children }) {
 
 export default function ProgramDetail() {
   const { id } = useParams();
-  const [program, setProgram] = useState(null);
-  const [weeks, setWeeks] = useState([]);
-  const [sessions, setSessions] = useState([]);
+  const { isAuthenticated } = useAuth();
   const [favorite, setFavorite] = useState(false);
+  const [favoriteError, setFavoriteError] = useState("");
 
-  useEffect(() => {
-    fetch(`${API_URL}/programs/${id}`)
-      .then((res) => res.json())
-      .then(setProgram);
-    fetch(`${API_URL}/programs/${id}/weeks`).then((res) => res.json()).then(setWeeks);
-    fetch(`${API_URL}/programs/${id}/sessions`).then((res) => res.json()).then(setSessions);
-  }, [id]);
+  const programQuery = useQuery({
+    queryKey: ["program", id],
+    queryFn: async () => {
+      const { data } = await apiClient.get(`/programs/${id}`);
+      return data;
+    },
+    enabled: Boolean(id),
+  });
+
+  const weeksQuery = useQuery({
+    queryKey: ["program-weeks", id],
+    queryFn: async () => {
+      const { data } = await apiClient.get(`/programs/${id}/weeks`);
+      return data;
+    },
+    enabled: Boolean(id),
+  });
+
+  const sessionsQuery = useQuery({
+    queryKey: ["program-sessions", id],
+    queryFn: async () => {
+      const { data } = await apiClient.get(`/programs/${id}/sessions`);
+      return data;
+    },
+    enabled: Boolean(id),
+  });
+
+  const favoriteMutation = useMutation({
+    mutationFn: async (shouldRemove) => {
+      if (shouldRemove) {
+        await apiClient.delete(`/programs/${id}/favorite`);
+        return false;
+      }
+      await apiClient.post(`/programs/${id}/favorite`);
+      return true;
+    },
+    onSuccess: (nextState) => {
+      setFavorite(nextState);
+      setFavoriteError("");
+    },
+    onError: (error) => {
+      const detail = error.response?.data?.detail || "Impossible d'actualiser votre favori.";
+      setFavoriteError(detail);
+    },
+  });
 
   const handleFavorite = () => {
-    const method = favorite ? "DELETE" : "POST";
-    fetch(`${API_URL}/programs/${id}/favorite?user_id=1`, { method })
-      .then(() => setFavorite((prev) => !prev))
-      .catch(() => setFavorite((prev) => !prev));
+    if (!isAuthenticated || favoriteMutation.isPending) {
+      return;
+    }
+    favoriteMutation.mutate(favorite);
   };
 
-  if (!program) {
+  if (programQuery.isLoading) {
     return (
       <main className="min-h-screen bg-gray-50 pb-12 pt-8 font-sans">
         <div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8 space-y-8">
@@ -51,6 +89,29 @@ export default function ProgramDetail() {
       </main>
     );
   }
+
+  if (programQuery.isError) {
+    return (
+      <main className="min-h-screen bg-gray-50 pb-12 pt-8 font-sans">
+        <div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8 space-y-8">
+          <div className="rounded-3xl border border-orange-100 bg-white p-8 text-center text-gray-700 shadow-sm">
+            <p className="text-lg font-semibold text-gray-900">Programme introuvable</p>
+            <p className="text-sm text-gray-600">Il a peut-être été retiré ou n'existe plus.</p>
+            <Link
+              to="/programs"
+              className="mt-4 inline-flex items-center justify-center rounded-full border border-orange-200 bg-orange-50 px-4 py-2 text-sm font-semibold text-orange-600"
+            >
+              Retourner aux programmes
+            </Link>
+          </div>
+        </div>
+      </main>
+    );
+  }
+
+  const program = programQuery.data;
+  const weeks = weeksQuery.data || [];
+  const sessions = sessionsQuery.data || [];
 
   return (
     <main className="min-h-screen bg-gray-50 pb-12 pt-8 font-sans">
@@ -63,14 +124,24 @@ export default function ProgramDetail() {
               Niveau {program.level} · {program.duration_weeks} semaines · Objectif : {program.goal}
             </p>
           </div>
-          <div className="flex gap-3">
-            <button
-              type="button"
-              onClick={handleFavorite}
-              className="inline-flex items-center gap-2 rounded-full border border-orange-200 bg-orange-50 px-4 py-2 text-sm font-semibold text-orange-600 shadow-sm transition hover:border-orange-300 hover:bg-orange-100"
-            >
-              {favorite ? "★ Retirer" : "☆ Favori"}
-            </button>
+          <div className="flex flex-wrap items-center gap-3">
+            {isAuthenticated ? (
+              <button
+                type="button"
+                onClick={handleFavorite}
+                disabled={favoriteMutation.isPending}
+                className="inline-flex items-center gap-2 rounded-full border border-orange-200 bg-orange-50 px-4 py-2 text-sm font-semibold text-orange-600 shadow-sm transition hover:border-orange-300 hover:bg-orange-100 disabled:opacity-50"
+              >
+                {favorite ? "★ Retirer" : "☆ Favori"}
+              </button>
+            ) : (
+              <Link
+                to="/login"
+                className="inline-flex items-center gap-2 rounded-full border border-orange-200 bg-white px-4 py-2 text-sm font-semibold text-orange-600 shadow-sm"
+              >
+                Connectez-vous pour ajouter aux favoris
+              </Link>
+            )}
             <Link
               to="/programs"
               className="inline-flex items-center gap-2 rounded-full border border-orange-200 bg-white px-4 py-2 text-sm font-semibold text-orange-600 shadow-sm transition hover:border-orange-300 hover:bg-orange-50"
@@ -79,6 +150,10 @@ export default function ProgramDetail() {
             </Link>
           </div>
         </div>
+
+        {favoriteError && (
+          <div className="rounded-2xl border border-red-100 bg-red-50 px-4 py-3 text-sm text-red-700">{favoriteError}</div>
+        )}
 
         <div className="grid gap-6 lg:grid-cols-[1.05fr,0.95fr]">
           <div className="overflow-hidden rounded-3xl border border-orange-100 bg-white shadow-lg shadow-orange-50">

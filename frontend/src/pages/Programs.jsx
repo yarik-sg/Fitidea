@@ -1,50 +1,52 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useMemo, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import ProgramCard from "../components/ProgramCard";
 import ProgramFilters from "../components/ProgramFilters";
 import CoachCard from "../components/CoachCard";
+import apiClient from "../lib/apiClient";
 
-const API_URL = import.meta.env.VITE_API_URL || "http://localhost:8000/api";
-
-function fetchJson(url, options) {
-  return fetch(url, options).then((res) => res.json());
-}
+const PAGE_SIZE = 12;
 
 export default function Programs() {
-  const [programs, setPrograms] = useState([]);
-  const [meta, setMeta] = useState({ page: 1, page_size: 12, total: 0 });
   const [filters, setFilters] = useState({ page: 1 });
-  const [coaches, setCoaches] = useState([]);
-  const [loading, setLoading] = useState(false);
 
-  const queryString = useMemo(() => {
-    const params = new URLSearchParams();
-    Object.entries(filters).forEach(([key, value]) => {
-      if (value !== null && value !== undefined && value !== "") {
-        params.append(key, value);
-      }
-    });
-    return params.toString();
-  }, [filters]);
+  const coachesQuery = useQuery({
+    queryKey: ["coaches"],
+    queryFn: async () => {
+      const { data } = await apiClient.get("/programs/coaches");
+      return data;
+    },
+  });
 
-  useEffect(() => {
-    fetchJson(`${API_URL}/programs/coaches`).then(setCoaches).catch(() => setCoaches([]));
-  }, []);
+  const queryKey = useMemo(() => ({ ...filters }), [filters]);
 
-  useEffect(() => {
-    setLoading(true);
-    fetchJson(`${API_URL}/programs?${queryString}`)
-      .then((data) => {
-        setPrograms(data.items || []);
-        setMeta({ page: data.page, page_size: data.page_size, total: data.total });
-      })
-      .catch(() => setPrograms([]))
-      .finally(() => setLoading(false));
-  }, [queryString]);
+  const programsQuery = useQuery({
+    queryKey: ["training-programs", queryKey],
+    queryFn: async () => {
+      const params = { page: filters.page || 1, page_size: PAGE_SIZE };
+      if (filters.goal) params.goal = filters.goal;
+      if (filters.level) params.level = filters.level;
+      if (filters.duration) params.duration = filters.duration;
+      if (filters.coach_id) params.coach_id = filters.coach_id;
+      if (filters.search) params.search = filters.search;
+      const { data } = await apiClient.get("/programs", { params });
+      return data;
+    },
+    keepPreviousData: true,
+  });
 
   const handleChange = (partial) => setFilters((prev) => ({ ...prev, page: 1, ...partial }));
   const handleReset = () => setFilters({ page: 1 });
 
-  const totalPages = Math.max(1, Math.ceil((meta.total || 0) / (meta.page_size || 1)));
+  const programs = programsQuery.data?.items || [];
+  const meta = {
+    page: programsQuery.data?.page || filters.page || 1,
+    page_size: programsQuery.data?.page_size || PAGE_SIZE,
+    total: programsQuery.data?.total || programs.length,
+  };
+  const totalPages = Math.max(1, Math.ceil((meta.total || 0) / (meta.page_size || PAGE_SIZE)));
+
+  const coaches = coachesQuery.data || [];
 
   return (
     <main className="min-h-screen bg-gradient-to-b from-orange-50/70 via-white to-white py-10">
@@ -62,7 +64,18 @@ export default function Programs() {
 
         <ProgramFilters filters={filters} coaches={coaches} onChange={handleChange} onReset={handleReset} />
 
-        {loading ? (
+        {programsQuery.isError ? (
+          <div className="rounded-2xl border border-red-100 bg-red-50 p-6 text-center text-sm text-red-700">
+            <p className="font-semibold text-red-800">Impossible de charger les programmes.</p>
+            <button
+              type="button"
+              onClick={() => programsQuery.refetch()}
+              className="mt-3 inline-flex items-center justify-center rounded-full bg-white px-4 py-2 text-xs font-semibold text-red-700 shadow-sm"
+            >
+              Réessayer
+            </button>
+          </div>
+        ) : programsQuery.isLoading ? (
           <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
             {Array.from({ length: 6 }).map((_, idx) => (
               <div key={idx} className="h-72 animate-pulse rounded-2xl bg-orange-50/60" />
@@ -79,7 +92,7 @@ export default function Programs() {
         <div className="flex items-center justify-between rounded-2xl border border-orange-100 bg-white px-4 py-3 shadow-sm shadow-orange-50">
           <button
             type="button"
-            disabled={meta.page <= 1}
+            disabled={meta.page <= 1 || programsQuery.isFetching}
             onClick={() => setFilters((prev) => ({ ...prev, page: Math.max(1, (prev.page || 1) - 1) }))}
             className="rounded-lg px-3 py-2 text-sm font-semibold text-orange-600 disabled:opacity-40"
           >
@@ -87,10 +100,11 @@ export default function Programs() {
           </button>
           <p className="text-sm text-gray-600">
             Page {meta.page} sur {totalPages} ({meta.total} programmes)
+            {programsQuery.isFetching ? " · mise à jour..." : ""}
           </p>
           <button
             type="button"
-            disabled={meta.page >= totalPages}
+            disabled={meta.page >= totalPages || programsQuery.isFetching}
             onClick={() => setFilters((prev) => ({ ...prev, page: (prev.page || 1) + 1 }))}
             className="rounded-lg px-3 py-2 text-sm font-semibold text-orange-600 disabled:opacity-40"
           >

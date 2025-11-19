@@ -1,6 +1,7 @@
 from datetime import datetime
-from random import choice
+from datetime import datetime
 from sqlalchemy.orm import Session
+import logging
 
 from app.models.training import (
     Coach,
@@ -13,7 +14,9 @@ from app.models.training import (
 from app.models.user import User
 from passlib.context import CryptContext
 from app.core.config import settings
+from app.models.gym import Gym
 
+logger = logging.getLogger(__name__)
 
 PROGRAM_GOALS = ["prise_masse", "perte_poids", "performance", "bien_etre", "full_body", "split", "hiit", "mobilité", "force"]
 PROGRAM_LEVELS = ["débutant", "intermédiaire", "avancé"]
@@ -65,6 +68,7 @@ def _create_coaches(db: Session) -> list[Coach]:
     ]
     db.add_all(coaches)
     db.commit()
+    logger.info("Seeded %s coaches", len(coaches))
     return coaches
 
 
@@ -100,6 +104,7 @@ def _create_programs(db: Session, coaches: list[Coach]) -> list[WorkoutProgram]:
         db.add(program)
         programs.append(program)
     db.commit()
+    logger.info("Seeded %s workout programs", len(programs))
     return programs
 
 
@@ -128,6 +133,7 @@ def _create_structure(db: Session, programs: list[WorkoutProgram]) -> None:
                     )
                     db.add(exercise)
     db.commit()
+    logger.info("Created workout structure for demo programs")
 
 
 def seed_training_data(db: Session) -> None:
@@ -151,10 +157,9 @@ def seed_training_data(db: Session) -> None:
         db.add(sample)
         db.commit()
 
-    # Create some demo products for the frontend when database is empty
-    # Only run demo seeding when DEV_SEED is enabled in environment.
     if getattr(settings, "dev_seed", False):
         _create_sample_products(db)
+        _create_sample_gyms(db)
 
 
 def _create_sample_products(db: Session) -> None:
@@ -186,10 +191,63 @@ def _create_sample_products(db: Session) -> None:
             "url": "https://example.com/product/creatine-300g",
             "source": "ExampleStore",
         },
+        {
+            "name": "Pré-workout Agrumes",
+            "description": "Formule énergie sans crash pour séances intenses.",
+            "price": 24.9,
+            "brand": "Foodspring",
+            "category": "preworkout",
+            "rating": 4.0,
+            "images": ["https://images.unsplash.com/photo-1464305795204-6f5bbfc7fb81?auto=format&fit=crop&w=800&q=80"],
+            "url": "https://example.com/product/preworkout", 
+            "source": "ExampleStore",
+        },
     ]
 
     for item in demo_products:
         p = Product(**item)
         db.add(p)
     db.commit()
+    logger.info("Seeded %s demo products", len(demo_products))
+
+
+def _create_sample_gyms(db: Session) -> None:
+    if db.query(Gym).count() > 0:
+        return
+
+    gyms = [
+        {
+            "name": "Basic-Fit Rivoli",
+            "brand": "basicfit",
+            "city": "Paris",
+            "address": "12 Rue de Rivoli, 75004 Paris",
+            "price": "19,99€/mois",
+            "image_url": "https://images.unsplash.com/photo-1556817411-31ae72fa3ea0?auto=format&fit=crop&w=1000&q=80",
+            "logo_url": "https://upload.wikimedia.org/wikipedia/commons/thumb/0/05/Basic-Fit_logo.svg/320px-Basic-Fit_logo.svg.png",
+            "opened_24_7": False,
+        },
+        {
+            "name": "Fitness Park Confluence",
+            "brand": "fitnesspark",
+            "city": "Lyon",
+            "address": "112 Cours Charlemagne, 69002 Lyon",
+            "price": "29,95€/mois",
+            "image_url": "https://images.unsplash.com/photo-1579758629938-03607ccdbaba?auto=format&fit=crop&w=1000&q=80",
+            "opened_24_7": True,
+        },
+        {
+            "name": "Neoness Prado",
+            "brand": "neoness",
+            "city": "Marseille",
+            "address": "5 Boulevard Michelet, 13008 Marseille",
+            "price": "24,90€/mois",
+            "image_url": "https://images.unsplash.com/photo-1517836357463-d25dfeac3438?auto=format&fit=crop&w=1000&q=80",
+        },
+    ]
+
+    for gym in gyms:
+        db.add(Gym(**gym))
+
+    db.commit()
+    logger.info("Seeded %s demo gyms", len(gyms))
 
