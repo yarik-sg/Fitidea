@@ -149,3 +149,41 @@ def seed_training_data(db: Session) -> None:
         sample = FavoriteProgram(user_id=user.id, program_id=programs[0].id, added_at=datetime.utcnow())
         db.add(sample)
         db.commit()
+
+
+def _create_sample_products(db: Session) -> None:
+    from app.models.product import Product
+
+    if db.query(Product).count() > 0:
+        return
+
+    demo_products = [
+        {
+            "name": "Whey Protein Vanilla 1kg",
+            "description": "Protéine de lactosérum, goût vanille.",
+            "price": 29.99,
+            "brand": "MyProtein",
+            "category": "whey",
+            "rating": 4.5,
+            "images": ["https://images.unsplash.com/photo-1586201375761-83865001e3f6?auto=format&fit=crop&w=800&q=80"],
+            "url": "https://example.com/product/whey-vanilla",
+            "source": "ExampleStore",
+        },
+        {
+            "name": "Créatine Monohydrate 300g",
+            "description": "Créatine pure pour la performance.",
+            "price": 19.99,
+            "brand": "Prozis",
+            "category": "creatine",
+            "rating": 4.2,
+            "images": ["https://images.unsplash.com/photo-1607746882042-944635dfe10e?auto=format&fit=crop&w=800&q=80"],
+            "url": "https://example.com/product/creatine-300g",
+            "source": "ExampleStore",
+        },
+    ]
+
+    for item in demo_products:
+        p = Product(**item)
+        db.add(p)
+    db.commit()
+
