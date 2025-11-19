@@ -12,6 +12,7 @@ class Settings(BaseSettings):
     redis_url: str = Field(default="redis://localhost:6379/0", alias="REDIS_URL")
     secret_key: str = Field(default="CHANGE_ME", alias="SECRET_KEY")
     serpapi_key: str | None = Field(default=None, alias="SERPAPI_KEY")
+    dev_seed: bool = Field(default=False, alias="DEV_SEED")
 
     @field_validator("backend_cors_origins", mode="before")
     @classmethod

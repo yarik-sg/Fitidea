@@ -12,6 +12,7 @@ from app.models.training import (
 )
 from app.models.user import User
 from passlib.context import CryptContext
+from app.core.config import settings
 
 
 PROGRAM_GOALS = ["prise_masse", "perte_poids", "performance", "bien_etre", "full_body", "split", "hiit", "mobilité", "force"]
@@ -151,7 +152,9 @@ def seed_training_data(db: Session) -> None:
         db.commit()
 
     # Create some demo products for the frontend when database is empty
-    _create_sample_products(db)
+    # Only run demo seeding when DEV_SEED is enabled in environment.
+    if getattr(settings, "dev_seed", False):
+        _create_sample_products(db)
 
 
 def _create_sample_products(db: Session) -> None:
