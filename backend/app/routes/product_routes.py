@@ -11,6 +11,8 @@ from app.models.product import Product
 from app.schemas.offer import OfferRead
 from app.schemas.product import ProductRead
 from app.services.product_ingest_service import ingest_product
+from app.services import serpapi_service
+from app.core.config import settings
 
 router = APIRouter(prefix="/products", tags=["products"])
 
@@ -98,7 +100,7 @@ async def bulk_scrape_products(
 
 
 @router.get("/search", response_model=PaginatedProductsResponse)
-def search_products(
+async def search_products(
     *,
     db: Session = Depends(get_db),
     q: Optional[str] = Query(None, description="Recherche texte"),
@@ -136,6 +138,41 @@ def search_products(
         .limit(page_size)
         .all()
     )
+
+    # If we have no results from the DB and a textual query is provided,
+    # attempt to fetch results from SerpAPI (google_shopping) as a fallback.
+    if q and total == 0 and settings.serpapi_key:
+        try:
+            serp = await serpapi_service.search_product(q)
+            offers = serp.get("offers", [])
+            items = []
+            for idx, offer in enumerate(offers, start=1):
+                items.append(
+                    {
+                        "id": idx,
+                        "name": offer.get("title") or q,
+                        "description": None,
+                        "price": float(offer.get("price") or 0),
+                        "brand": None,
+                        "category": None,
+                        "rating": None,
+                        "reviews_count": None,
+                        "images": [offer.get("thumbnail")] if offer.get("thumbnail") else [],
+                        "url": offer.get("link"),
+                        "source": offer.get("source"),
+                        "created_at": None,
+                    }
+                )
+
+            return {
+                "items": items,
+                "total": len(items),
+                "page": 1,
+                "page_size": len(items),
+            }
+        except serpapi_service.SerpApiError:
+            # swallow and return empty DB result
+            pass
 
     return {
         "items": [ProductRead.from_orm(product) for product in products],
