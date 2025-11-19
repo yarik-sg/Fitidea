@@ -1,7 +1,14 @@
 import axios from "axios";
 
+// Resolve base URL from env vars. Project defines `VITE_API_BASE_URL` in `.env`.
+const base = import.meta.env.VITE_API_BASE_URL || import.meta.env.VITE_API_URL || "http://localhost:8000";
+const prefix = import.meta.env.VITE_API_PREFIX || "/api";
+
+const normalizedBase = base.replace(/\/+$/, "");
+const normalizedPrefix = prefix.startsWith("/") ? prefix : `/${prefix}`;
+
 const apiClient = axios.create({
-  baseURL: import.meta.env.VITE_API_URL || "http://localhost:3000/api",
+  baseURL: `${normalizedBase}${normalizedPrefix}`,
 });
 
 authInterceptor(apiClient);
