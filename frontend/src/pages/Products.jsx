@@ -41,6 +41,7 @@ const saveComparisons = (items) => {
 
 function ProductCard({ product, onCompare }) {
   const priceLabel = formatCurrency(product.price) || "Prix non disponible";
+  const hasDetails = Number.isInteger(product.id) && product.id > 0;
   let image = null;
   try {
     const imgs = Array.isArray(product.images)
@@ -83,16 +84,28 @@ function ProductCard({ product, onCompare }) {
             <p className="text-sm text-gray-500">Note {formatRating(product.rating)}</p>
           </div>
           <div className="flex gap-2">
-            <Link
-              to={`/products/${product.id}`}
-              className="rounded-full border border-orange-100 bg-orange-50 px-4 py-2 text-sm font-semibold text-orange-700 transition hover:border-orange-200 hover:bg-orange-100"
-            >
-              Détails
-            </Link>
+            {hasDetails ? (
+              <Link
+                to={`/products/${product.id}`}
+                className="rounded-full border border-orange-100 bg-orange-50 px-4 py-2 text-sm font-semibold text-orange-700 transition hover:border-orange-200 hover:bg-orange-100"
+              >
+                Détails
+              </Link>
+            ) : product.url ? (
+              <a
+                href={product.url}
+                target="_blank"
+                rel="noreferrer"
+                className="rounded-full border border-orange-100 bg-white px-4 py-2 text-sm font-semibold text-orange-600 shadow-sm hover:border-orange-200"
+              >
+                Voir l'offre
+              </a>
+            ) : null}
             <button
               type="button"
+              disabled={!hasDetails}
               onClick={() => onCompare(product)}
-              className="rounded-full bg-orange-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-orange-700"
+              className="rounded-full bg-orange-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-orange-700 disabled:cursor-not-allowed disabled:bg-orange-200"
             >
               Comparer
             </button>
@@ -245,18 +258,21 @@ function Products() {
     setSearchParams({});
   };
 
+  const activeFilters = useMemo(() => {
+    const entries = Object.entries(filters).filter(([, value]) => value !== null && value !== undefined && value !== "");
+    return Object.fromEntries(entries);
+  }, [filters]);
+
   const { data, isLoading, isError, refetch } = useQuery({
-    queryKey: ["products", filters],
+    queryKey: ["products", activeFilters],
     queryFn: async () => {
-      const { data: response } = await apiClient.get("/products/search", { params: filters });
-      // debug: log response for troubleshooting missing images
-      // eslint-disable-next-line no-console
-      console.debug("[Products] /products/search response:", response);
+      const { data: response } = await apiClient.get("/products/search", { params: activeFilters });
       return response;
     },
   });
 
   const addToCompare = (product) => {
+    if (!product.id || product.id < 1) return;
     const existing = getStoredComparisons();
     if (existing.find((item) => item.id === product.id)) return;
     const next = [...existing, { id: product.id, name: product.name, price: product.price, brand: product.brand, images: product.images }].slice(-3);
@@ -311,6 +327,10 @@ function Products() {
           >
             Réessayer
           </button>
+        </div>
+      ) : products.length === 0 ? (
+        <div className="rounded-2xl border border-orange-100 bg-white p-8 text-center text-sm text-gray-600">
+          Aucun produit ne correspond à vos filtres. Essayez d'élargir votre recherche ou de lancer une recherche live.
         </div>
       ) : (
         <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">

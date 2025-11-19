@@ -1,5 +1,6 @@
 from datetime import datetime
 from typing import List, Optional
+import logging
 
 from fastapi import APIRouter, Depends, HTTPException, Query, Request, status
 from pydantic import BaseModel
@@ -17,6 +18,7 @@ from app.services.gym_scraper_service import (
 from app.scrapers import sync_all
 
 router = APIRouter(prefix="/gyms", tags=["gyms"])
+logger = logging.getLogger(__name__)
 
 
 async def get_redis_client(request: Request):
@@ -83,6 +85,9 @@ def list_gyms(
         query = query.filter(Gym.brand.ilike(f"%{brand}%"))
 
     total = query.count()
+    logger.info(
+        "Gyms listing", extra={"search": search, "city": city, "brand": brand, "results": total}
+    )
     gyms = (
         query.order_by(Gym.created_at.desc())
         .offset((page - 1) * page_size)

@@ -1,3 +1,4 @@
+import logging
 from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordRequestForm
 from pydantic import BaseModel
@@ -10,6 +11,8 @@ from app.models.user import User
 from app.schemas.user import UserCreate, UserRead
 
 router = APIRouter(prefix="/auth", tags=["auth"])
+
+logger = logging.getLogger(__name__)
 
 
 class TokenResponse(BaseModel):
@@ -31,6 +34,7 @@ def signup(user_in: UserCreate, db: Session = Depends(get_db)) -> TokenResponse:
     db.refresh(user)
 
     token = create_access_token({"sub": str(user.id)})
+    logger.info("New signup", extra={"user_id": user.id, "email": user.email})
     return TokenResponse(access_token=token, token_type="bearer", user=UserRead.from_orm(user))
 
 
@@ -39,9 +43,11 @@ def login(form_data: OAuth2PasswordRequestForm = Depends(), db: Session = Depend
     """Authenticate a user and return an access token."""
     user = db.query(User).filter(User.email == form_data.username).first()
     if not user or not verify_password(form_data.password, user.hashed_password):
+        logger.warning("Failed login", extra={"email": form_data.username})
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Incorrect email or password")
 
     token = create_access_token({"sub": str(user.id)})
+    logger.info("Successful login", extra={"user_id": user.id})
     return TokenResponse(access_token=token, token_type="bearer", user=UserRead.from_orm(user))
 
 

@@ -4,6 +4,7 @@ from fastapi import APIRouter, Body, Depends, HTTPException, Query, Request, sta
 from pydantic import BaseModel, Field
 from sqlalchemy import or_
 from sqlalchemy.orm import Session
+import logging
 
 from app.db.session import get_db
 from app.models.offer import Offer
@@ -15,6 +16,8 @@ from app.services import serpapi_service
 from app.core.config import settings
 
 router = APIRouter(prefix="/products", tags=["products"])
+
+logger = logging.getLogger(__name__)
 
 
 async def get_redis_client(request: Request):
@@ -112,6 +115,10 @@ async def search_products(
     source: Optional[str] = Query(None),
     page: int = Query(1, ge=1),
     page_size: int = Query(12, ge=1, le=100),
+    use_live: bool = Query(
+        False,
+        description="Forcer l'utilisation de SerpAPI pour une recherche temps-réel",
+    ),
 ):
     query = db.query(Product)
 
@@ -139,40 +146,38 @@ async def search_products(
         .all()
     )
 
-    # If we have no results from the DB and a textual query is provided,
-    # attempt to fetch results from SerpAPI (google_shopping) as a fallback.
-    if q and total == 0 and settings.serpapi_key:
-        try:
-            serp = await serpapi_service.search_product(q)
-            offers = serp.get("offers", [])
-            items = []
-            for idx, offer in enumerate(offers, start=1):
-                items.append(
-                    {
-                        "id": idx,
-                        "name": offer.get("title") or q,
-                        "description": None,
-                        "price": float(offer.get("price") or 0),
-                        "brand": None,
-                        "category": None,
-                        "rating": None,
-                        "reviews_count": None,
-                        "images": [offer.get("thumbnail")] if offer.get("thumbnail") else [],
-                        "url": offer.get("link"),
-                        "source": offer.get("source"),
-                        "created_at": None,
-                    }
-                )
+    has_db_results = total > 0
+    should_use_live = use_live or (not has_db_results and (q or category or brand))
 
-            return {
-                "items": items,
-                "total": len(items),
-                "page": 1,
-                "page_size": len(items),
-            }
-        except serpapi_service.SerpApiError:
-            # swallow and return empty DB result
-            pass
+    logger.info(
+        "Product search", extra={"query": q, "filters": {"category": category, "brand": brand}}
+    )
+
+    if use_live and not settings.serpapi_key:
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="SerpAPI non configuré",
+        )
+
+    if should_use_live and settings.serpapi_key:
+        try:
+            return await serpapi_service.search_supplements(
+                q or "complément fitness",
+                category=category,
+                brand=brand,
+                price_min=price_min,
+                price_max=price_max,
+                source=source,
+                page=page,
+                page_size=page_size,
+            )
+        except serpapi_service.SerpApiError as exc:
+            logger.warning("SerpAPI search failed: %s", exc)
+            if use_live:
+                raise HTTPException(
+                    status_code=status.HTTP_502_BAD_GATEWAY,
+                    detail="SerpAPI temporairement indisponible",
+                ) from exc
 
     return {
         "items": [ProductRead.from_orm(product) for product in products],

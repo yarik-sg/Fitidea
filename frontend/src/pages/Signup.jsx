@@ -6,7 +6,7 @@ import { useAuth } from "../lib/auth";
 function Signup() {
   const navigate = useNavigate();
   const { signup } = useAuth();
-  const [form, setForm] = useState({ email: "", password: "", confirmPassword: "" });
+  const [form, setForm] = useState({ fullName: "", email: "", password: "", confirmPassword: "" });
   const [errorMessage, setErrorMessage] = useState("");
 
   const signupMutation = useMutation({
@@ -14,7 +14,11 @@ function Signup() {
       if (form.password !== form.confirmPassword) {
         throw new Error("Les mots de passe doivent correspondre.");
       }
-      const data = await signup({ email: form.email, password: form.password, confirmPassword: form.confirmPassword });
+      const payload = { email: form.email, password: form.password };
+      if (form.fullName) {
+        payload.full_name = form.fullName;
+      }
+      const data = await signup(payload);
       return data;
     },
     onSuccess: () => {
@@ -72,6 +76,21 @@ function Signup() {
             )}
 
             <form className="space-y-4" onSubmit={handleSubmit}>
+              <div className="space-y-2">
+                <label className="text-sm font-semibold text-gray-700" htmlFor="fullName">
+                  Prénom / Nom
+                </label>
+                <input
+                  id="fullName"
+                  name="fullName"
+                  type="text"
+                  value={form.fullName}
+                  onChange={handleChange}
+                  placeholder="Sophie Coach"
+                  className="w-full rounded-xl border border-orange-100 bg-white px-4 py-3 text-sm font-medium text-gray-900 placeholder:text-gray-400 shadow-sm transition focus:border-orange-400 focus:outline-none focus:ring-2 focus:ring-orange-100"
+                />
+              </div>
+
               <div className="space-y-2">
                 <label className="text-sm font-semibold text-gray-700" htmlFor="email">
                   Email
