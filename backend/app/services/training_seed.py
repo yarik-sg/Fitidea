@@ -150,6 +150,9 @@ def seed_training_data(db: Session) -> None:
         db.add(sample)
         db.commit()
 
+    # Create some demo products for the frontend when database is empty
+    _create_sample_products(db)
+
 
 def _create_sample_products(db: Session) -> None:
     from app.models.product import Product
